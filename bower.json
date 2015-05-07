@@ -1,0 +1,16 @@
+{
+  "name": "site",
+  "version": "0.0.1",
+  "authors": ["author"],
+  "description": "A starter kit for webapps by Yakyn Labs.",
+  "moduleType": ["amd"],
+  "license": "ISC",
+  "private": true,
+  "dependencies": {
+    "jquery": "1.11.1",
+    "backbone": "~1.1.2",
+    "underscore": "~1.7.0",
+    "requirejs": "~2.1.11",
+    "almond": "~0.2.9"
+  }
+}
