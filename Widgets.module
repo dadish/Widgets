@@ -18,103 +18,103 @@
 
 class Widgets extends WireData implements Module {
 
-	/**
-	 * Table created by this module
-	 *
-	 */
-	const dbTableName = 'widgets';
+  /**
+   * Table created by this module
+   *
+   */
+  const dbTableName = 'widgets';
 
-	/**
-	 * Quick reference to database
-	 *
-	 */
-	protected $database;
+  /**
+   * Quick reference to database
+   *
+   */
+  protected $database;
 
-	/**
-	 * A widgets cache
-	 * 
-	 */
-	protected $widgetsCache;
-	
-	/**
-	 * getModuleInfo is a module required by all modules to tell ProcessWire about them
-	 *
-	 * @return array
-	 *
-	 */
-	public static function getModuleInfo() {
-		return array(
-			'title' => 'Widgets', 
-			'version' => 001, 
-			'summary' => __('Helps to build responsive websites with ease.'),
-			'singular' => true, 
-			'autoload' => true, 
-			'icon' => 'cubes', 
-			);
-	}
+  /**
+   * A widgets cache
+   * 
+   */
+  protected $widgetsCache;
+  
+  /**
+   * getModuleInfo is a module required by all modules to tell ProcessWire about them
+   *
+   * @return array
+   *
+   */
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Widgets', 
+      'version' => 001, 
+      'summary' => __('Helps to build responsive websites with ease.'),
+      'singular' => true, 
+      'autoload' => true, 
+      'icon' => 'cubes', 
+      );
+  }
 
-	/**
-	 * Construct
-	 *
-	 */
-	public function __construct() {
-		require_once($this->config->paths->Widgets . "Widget.php");
-		parent::__construct();
-		$this->database = wire('database');
-		$this->widgetsCache = new WidgetsArray();
-	}
+  /**
+   * Construct
+   *
+   */
+  public function __construct() {
+    require_once($this->config->paths->Widgets . "Widget.php");
+    parent::__construct();
+    $this->database = wire('database');
+    $this->widgetsCache = new WidgetsArray();
+  }
 
-	/**
-	 * Initialize the module
-	 *
-	 */
-	public function init() {
-		$this->message('Widgets module is initialized!');
-	}
+  /**
+   * Initialize the module
+   *
+   */
+  public function init() {
+    $this->message('Widgets module is initialized!');
+  }
 
-	public function get($key)
-	{
-		$value = $this->widgetsCache->get($key);
-		if ($value instanceof Widget) return $value;
-		return parent::get($key);
-	}
+  public function get($key)
+  {
+    $value = $this->widgetsCache->get($key);
+    if ($value instanceof Widget) return $value;
+    return parent::get($key);
+  }
 
-	public function save(Widget $widget)
-	{
-		$table = self::dbTableName;
-		$data = $widget->getArray();
-		$sql = "INSERT INTO $table (owner, ownerType, parent, data) VALUES(:owner, :ownerType, :parent, :data)";
-		$sql = "UPDATE $table SET "
-	}
+  public function save(Widget $widget)
+  {
+    $table = self::dbTableName;
+    $data = $widget->getArray();
+    $sql = "INSERT INTO $table (owner, ownerType, parent, data) VALUES(:owner, :ownerType, :parent, :data)";
+    $sql = "UPDATE $table SET "
+  }
 
-	/**
-	 * Install sessions table
-	 *
-	 */
-	public function ___install() {
-		
-		$table = self::dbTableName;
+  /**
+   * Install sessions table
+   *
+   */
+  public function ___install() {
+    
+    $table = self::dbTableName;
 
-		$sql = 	"CREATE TABLE $table (
-			id INT UNSIGNED NOT NULL AUTO_INCREMENT,
-			owner INT UNSIGNED NOT NULL,
-			ownerType INT(1) NOT NULL,
-			parent INT UNSIGNED NOT NULL DEFAULT 0,
-			data TEXT,
-			PRIMARY KEY (id), 
-			INDEX (owner), 
-			INDEX (ownerType), 
-			INDEX (parent)
-			) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+    $sql =   "CREATE TABLE $table (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      owner INT UNSIGNED NOT NULL,
+      ownerType INT(1) NOT NULL,
+      parent INT UNSIGNED NOT NULL DEFAULT 0,
+      data TEXT,
+      PRIMARY KEY (id), 
+      INDEX (owner), 
+      INDEX (ownerType), 
+      INDEX (parent)
+      ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
 
-		$this->database->query($sql); 
-	}
+    $this->database->query($sql); 
+  }
 
-	/**
-	 * Drop sessions table
-	 *
-	 */
-	public function ___uninstall() {
-		$this->database->query("DROP TABLE " . self::dbTableName); 
-	}
+  /**
+   * Drop sessions table
+   *
+   */
+  public function ___uninstall() {
+    $this->database->query("DROP TABLE " . self::dbTableName); 
+  }
 }
