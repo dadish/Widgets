@@ -111,7 +111,7 @@ capabilities. It renders it's children and does not need any render pages, becau
 does not renders them in any way.
 ####Nest widgets via API
 You can nest widgets via api also.
-```
+```php
 $widget->add($anotherWidget);
 $widget->save();
 
@@ -128,7 +128,7 @@ and styles that is cutomizeble via Widgtet's settings. This also means that you
 can have one widget to look in one way on some page and another way in other page.
 ####Modifying Widgets Options via API
 You can modify widget settings via options property of the widget.
-```
+```php
 $widget->options->color = 'white';
 $widget->options->columns = 2;
 $widget->save();
@@ -138,18 +138,18 @@ $widget->save();
 You can change the order of the widgets on front end at __toolbar__. By dragging
 the list of child widgets up/down.
 ####Sort Widget via API
-```
+```php
 $modules->get('Widgets')->sort($widget, $order);
 ```
 
 ###Render Widgets
 It is very simple to render widgets in your template files. __Widgets__ module
 adds a _widgets_ property to every page that could be just rendered.
-```
+```php
 echo $page->widgets->render();
 ```
 You can also render widgets of the page individually by it's index.
-```
+```php
 echo "<h2>Welcome to our website!<h2>";
 
 echo $page->widgets->render(0);
