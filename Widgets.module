@@ -5,16 +5,16 @@
  * Widgets - A ProcessWire module.
  * Helps to build responsive websites with ease.
  * 
- * @todo get Method should return a Widget by id 
  * @todo implement a save method that saves a widget into db
  * @todo create a widgets cache from WidgetsArray
- * @todo implement widgets cashing logic
  * @todo widgets module api should derive from $page->widgets or $template->widgets
  * @todo implement a `new()` method that returns a new widget with owner assigned. Consider all three types of owners
  * @todo implement a `css()` method that returns a css string for all involved widgets
  * @todo implement a `cssMin()` method that returns a minified css string of the `css()` method
  * @todo implement widget sorting capabilities
  */
+
+require_once(__DIR__ . "/WidgetsArray.php");
 
 class Widgets extends WireData implements Module {
 
@@ -25,17 +25,17 @@ class Widgets extends WireData implements Module {
   const dbTableName = 'widgets';
 
   /**
+   * A cache of widgets
+   * 
+   */
+  protected $widgets;
+
+  /**
    * Quick reference to database
    *
    */
   protected $database;
 
-  /**
-   * A widgets cache
-   * 
-   */
-  protected $widgetsCache;
-  
   /**
    * getModuleInfo is a module required by all modules to tell ProcessWire about them
    *
@@ -58,10 +58,9 @@ class Widgets extends WireData implements Module {
    *
    */
   public function __construct() {
-    require_once($this->config->paths->Widgets . "Widget.php");
     parent::__construct();
     $this->database = wire('database');
-    $this->widgetsCache = new WidgetsArray();
+    $this->widgets = new WidgetsArray();
   }
 
   /**
@@ -74,17 +73,67 @@ class Widgets extends WireData implements Module {
 
   public function get($key)
   {
-    $value = $this->widgetsCache->get($key);
+    $value = $this->widgets->get($key);
+    if ($value instanceof Widget) return $value;
+    $value = $this->fetch($key);
     if ($value instanceof Widget) return $value;
     return parent::get($key);
   }
 
   public function save(Widget $widget)
   {
+    if (!$widget->isChanged()) return $widget;
     $table = self::dbTableName;
-    $data = $widget->getArray();
-    $sql = "INSERT INTO $table (owner, ownerType, parent, data) VALUES(:owner, :ownerType, :parent, :data)";
-    $sql = "UPDATE $table SET "
+    $arr = $widget->getArray();
+    $data = array(
+      'renderPages' => $arr['renderPages'],
+      'grid' => $arr['grid'],
+      'options' => $arr['options'],
+      'class' => $arr['class'],
+      'className' => $widget->className()
+      );
+    if ($widget->isNew()) {
+      $sql = "INSERT INTO $table (owner, ownerType, parent, data) VALUES(:owner, :ownerType, :parent, :data)";  
+    } else {
+      $sql = "UPDATE $table SET owner = :owner, ownerType = :ownerType, parent = :parent, data = :data WHERE id = :id";
+    }
+    $stmt = $this->datatbase->prepare($sql);
+    $stmt->execute(array(
+      ':owner' => $arr['owner'],
+      ':ownerType' => $arr['ownerType'],
+      ':parent' => $arr['parent'],
+      ':data' => json_encode($data)
+      ));
+    $id = $this->database->lastInsertId();
+    $widget->set('id', $id);
+    $this->includeWidget($widget);
+    return $widget;
+  }
+
+  public function fetch($key)
+  {
+    $table = self::dbTableName;
+    if ($key instanceof Widget) $key = $this->getItemKey($key);
+    $sql = "SELECT * FROM $table WHERE id = :id";
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute(array(
+      ':id' => $key
+      ));
+    if (!$stmt->rowCount()) return null;
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC)[0];
+    $data['data'] = json_decode($data['data'], true);
+    $className = $data['data']['className'];
+    $widget = $this->modules->get($className);
+    $widget->setArray($data);
+    $this->includeWidget($widget);
+    return $widget;
+  }
+
+  protected function includeWidget(Widget $widget)
+  {
+    if ($widget->isNew()) return $this;
+    if ($this->widgets->has($widget)) return $this;
+    return $this->widgets->add($widget);
   }
 
   /**
