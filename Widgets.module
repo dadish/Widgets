@@ -5,16 +5,12 @@
  * Widgets - A ProcessWire module.
  * Helps to build responsive websites with ease.
  * 
- * @todo implement a save method that saves a widget into db
- * @todo create a widgets cache from WidgetsArray
- * @todo widgets module api should derive from $page->widgets or $template->widgets
+ * @todo widgets module api should derive from $page->widgets
  * @todo implement a `new()` method that returns a new widget with owner assigned. Consider all three types of owners
  * @todo implement a `css()` method that returns a css string for all involved widgets
  * @todo implement a `cssMin()` method that returns a minified css string of the `css()` method
  * @todo implement widget sorting capabilities
  */
-
-require_once(__DIR__ . "/WidgetsArray.php");
 
 class Widgets extends WireData implements Module {
 
@@ -60,7 +56,7 @@ class Widgets extends WireData implements Module {
   public function __construct() {
     parent::__construct();
     $this->database = wire('database');
-    $this->widgets = new WidgetsArray();
+    $this->widgets = new WidgetArray();
   }
 
   /**
@@ -68,7 +64,14 @@ class Widgets extends WireData implements Module {
    *
    */
   public function init() {
-    $this->message('Widgets module is initialized!');
+    $this->addHookProperty('Page::widgets', $this, 'pageWidgets');
+  }
+
+  protected function pageWidgets(HookEvent $event)
+  {
+    $page = $event->object;
+    $this->fetchAll($page);
+    $event->return = new PageWidgets($page);
   }
 
   public function get($key)
@@ -80,8 +83,14 @@ class Widgets extends WireData implements Module {
     return parent::get($key);
   }
 
+  public function withOwner($ownerId)
+  {
+    return $this->widgets->filter("owner=$ownerId");
+  }
+
   public function save(Widget $widget)
   {
+    Widget::reportIfErrors($widget);
     if (!$widget->isChanged()) return $widget;
     $table = self::dbTableName;
     $arr = $widget->getArray();
@@ -92,25 +101,69 @@ class Widgets extends WireData implements Module {
       'class' => $arr['class'],
       'className' => $widget->className()
       );
+    $params = array(
+      ':owner' => $arr['owner'],
+      ':ownerType' => $arr['ownerType'],
+      ':parent' => $arr['parent'],
+      ':data' => json_encode($data),
+      );
     if ($widget->isNew()) {
       $sql = "INSERT INTO $table (owner, ownerType, parent, data) VALUES(:owner, :ownerType, :parent, :data)";  
     } else {
       $sql = "UPDATE $table SET owner = :owner, ownerType = :ownerType, parent = :parent, data = :data WHERE id = :id";
+      $params['id'] = $widget->id;
     }
-    $stmt = $this->datatbase->prepare($sql);
-    $stmt->execute(array(
-      ':owner' => $arr['owner'],
-      ':ownerType' => $arr['ownerType'],
-      ':parent' => $arr['parent'],
-      ':data' => json_encode($data)
-      ));
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute($params);
     $id = $this->database->lastInsertId();
     $widget->set('id', $id);
+    $widget->resetTrackChanges();
     $this->includeWidget($widget);
     return $widget;
   }
 
-  public function fetch($key)
+  /**
+   * @todo Figure out better way for checking the ancestor widgets.
+   * 
+   */
+  protected function fetchAll(Page $page)
+  {
+    $table = self::dbTableName;
+
+    // check if there are any widgets assigned directly to this page
+    $sql = "SELECT * FROM $table WHERE owner = $page->id AND ownerType = " . Widget::ownerTypePage;
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute();
+    if ($stmt->rowCount()) {
+      $page->WidgetsOwnerId = $page->id;
+      return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    // check if there is any widgets assigned to any ancestors
+    foreach ($page->parents() as $parent) {
+      $sql = "SELECT * FROM $table WHERE owner = $parent->id AND ownerType = " . Widget::ownerTypeAncestor;
+      $stmt = $this->database->prepare($sql);
+      $stmt->execute();
+      if ($stmt->rowCount()) {
+        $page->WidgetsOwnerId = $parent->id;
+        return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
+      }
+    }
+
+    // check if there is any widgets assigned to page's template
+    $sql = "SELECT * FROM $table WHERE owner = $page->template->id AND ownerType = " . Widget::ownerTypeTemplate;
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute();
+    if ($stmt->rowCount()) {
+      $page->WidgetsOwnerId = $page->template->id;
+      return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    // if there is no widgets then return empty array of widgets
+    return new WidgetArray();
+  }
+
+  protected function fetch($key)
   {
     $table = self::dbTableName;
     if ($key instanceof Widget) $key = $this->getItemKey($key);
@@ -119,14 +172,36 @@ class Widgets extends WireData implements Module {
     $stmt->execute(array(
       ':id' => $key
       ));
-    if (!$stmt->rowCount()) return null;
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC)[0];
-    $data['data'] = json_decode($data['data'], true);
-    $className = $data['data']['className'];
+    if ($stmt->rowCount()) return $this->dataToWidget($stmt->fetchAll(PDO::FETCH_ASSOC)[0]);
+    return null;
+  }
+
+  protected function dataToWidget($raw)
+  {
+    $raw['data'] = json_decode($raw['data'], true);
+    $data = array();
+    $data['id'] = $raw['id'];
+    $data['owner'] = $raw['owner'];
+    $data['ownerType'] = $raw['ownerType'];
+    $data['parent'] = $raw['parent'];
+    $data['renderPages'] = $raw['data']['renderPages'];
+    $data['grid'] = $raw['data']['grid'];
+    $data['class'] = $raw['data']['class'];
+    $data['options'] = $raw['data']['options'];
+  
+    $className = $raw['data']['className'];
     $widget = $this->modules->get($className);
     $widget->setArray($data);
+    $widget->resetTrackChanges();
     $this->includeWidget($widget);
     return $widget;
+  }
+
+  protected function dataToWidgets($raw)
+  {
+    $widgets = new WidgetArray();
+    foreach ($raw as $data) $widgets->add($this->dataToWidget($data));
+    return $widgets;
   }
 
   protected function includeWidget(Widget $widget)
@@ -148,13 +223,13 @@ class Widgets extends WireData implements Module {
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       owner INT UNSIGNED NOT NULL,
       ownerType INT(1) NOT NULL,
-      parent INT UNSIGNED NOT NULL DEFAULT 0,
+      parent INT UNSIGNED NOT NULL DEFAULT 1,
       data TEXT,
       PRIMARY KEY (id), 
       INDEX (owner), 
       INDEX (ownerType), 
       INDEX (parent)
-      ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+      ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8";
 
     $this->database->query($sql); 
   }
@@ -165,5 +240,13 @@ class Widgets extends WireData implements Module {
    */
   public function ___uninstall() {
     $this->database->query("DROP TABLE " . self::dbTableName); 
+  }
+
+  public function __debugInfo()
+  {
+    $info = parent::__debugInfo();
+    $info['widgets'] = array();
+    foreach ($this->widgets as $widget) $info['widgets'][] = $widget->__debugInfo();
+    return $info;
   }
 }

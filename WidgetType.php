@@ -10,9 +10,6 @@
 
 interface WidgetType {
 
-  public function isCompatible()
-  {
-    return true;
-  }
+  public function isCompatible();
 
 }

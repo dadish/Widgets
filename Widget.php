@@ -9,6 +9,8 @@
  * @property int $parent Parent widget. Default = 0;
  * @property string $class Class/es that will be rendered with the XHTML output.
  *
+ * @todo add a sort method for renderPages
+ * @todo add a sort method for childWidgets
  */
 
 class Widget extends WireData{
@@ -40,73 +42,41 @@ class Widget extends WireData{
   public function __construct()
   {
     parent::__construct();
-    require_once($this->config->paths->Widgets . "WidgetsArray.php");
     $this->set('id', null);
     $this->set('owner', null);
-    $this->set('ownerType', null);
+    $this->set('ownerType', self::ownerTypeTemplate);
     $this->set('renderPages', '');
-    $this->set('parent', 0);
+    $this->set('parent', 1);
     $this->set('class', $this->className);
     $this->set('grid', '');
     $this->set('options', new WireData());
     $this->renderPagesCache = new PageArray();
     $this->widgets = $this->modules->get('Widgets');
-  }
-
-  public static function sanitizeOwner($owner, $object)
-  {
-    if (is_null($object->ownerType)) {
-      // Try to find template first
-      $v = $object->templates->get($owner);
-      if (is_null($owner)) {
-        $v = $object->pages->get($owner);
-        if ($v instanceof NullPage) {
-          throw new WireException("Couldn't find the owner object: $owner. With ownerType `$object->ownerType`.");
-        }
-      }
-    } else if ($object->ownerType == self::ownerTypeTemplate) {
-      $v = $object->templates->get($owner);
-      if (is_null($v)) throw new WireException("Incompatible pair of owner `$owner` and ownerType `ownerTypeTemplate`");
-    } else if ($object->ownerType == self::ownerTypePage || $object->ownerType == self::ownerTypeAncestor) {
-      $v = $object->pages->get($owner);
-      $ownerType = ($object->ownerType == self::ownerTypePage) ? 'ownerTypePage' : 'ownerTypeAncestor';
-      if ($v instanceof NullPage) throw new WireException("Incompatible pair of `$owner` and ownerType `$ownerType`");
-    } else {
-      throw new WireException("You shouldn't event get this exception. You somehow managed to set wrong value for ownerType `$object->ownerType`. How the hell did you do that!?");
-    }
-    return $v;
-  }
-
-  public static function sanitizeOwnerType($ownerType, $object)
-  {
-    if (is_null($object->owner)) {
-      if ($ownerType == self::ownerTypeTemplate) return self::ownerTypeTemplate;
-      if ($ownerType == self::ownerTypePage) return self::ownerTypePage;
-      if ($ownerType == self::ownerTypeAncestor) return self::ownerTypeAncestor;      
-    } else if ($object->owner instanceof Template) {
-      if ($ownerType == self::ownerTypeTemplate) return self::ownerTypeTemplate;
-    } else if ($object->owner instanceof Page) {
-      if ($ownerType == self::ownerTypePage) return self::ownerTypePage;
-      if ($ownerType == self::ownerTypeAncestor) return self::ownerTypeAncestor;      
-    } else {
-      throw new WireException("You shouldn;t even get this exception. You somehow managed to set wrond value for owner `$object->owner`. How the hell did you do that!?");
-    }
-    throw new WireException("Wrong value for ownerType `$ownerType`");
+    $this->setTrackChanges();
   }
 
   public function __set($key, $value)
   {
     switch ($key) {
-      case 'owner':
-        $v = self::sanitizeOwner($value, $this);
-        $this->children->owner = $v->id;
-        return $this->set($key, $v->id);
+      case 'ownerType':
+        if (
+          $value == self::ownerTypePage ||
+          $value == self::ownerTypeTemplate ||
+          $value == self::ownerTypeAncestor
+        ) {
+          $this->children->setOwnerType($value);
+          return $this->set($key, $value);
+        } else {
+          throw new WireException("Wrong value for ownerType `$ownerType`");
+        }
         break;
 
-      case 'ownerType':
-        $v = self::sanitizeOwnerType($value, $this);
-        $this->children->ownerType = $v;
-        return $this->set($key, $v->id);
+      case 'owner':
+        $v = null;
+        if ($value instanceof Template || $value instanceof Page) $v = $value->id;
+        if (is_null($v)) $v = (string) $value;
+        $this->children->setOwner($v);
+        $this->set($key, $v);
         break;
 
       case 'parent':
@@ -114,7 +84,7 @@ class Widget extends WireData{
           if ($value->isNew()) throw new WireException("The widget `$value` should be saved to database first before being assigned as a parent.", 1);
           $value = $value->id;
         }
-        if ($value == 0) return $this->set($key, $value);
+        if ($value == 1) return $this->set($key, (integer) $value);
         $v = $this->widgets->get($value);
         if (!$v instanceof Widget) throw new WireException("Wrong widget `$value` as a parent.");
         return $this->set($key, $v->id);
@@ -146,7 +116,15 @@ class Widget extends WireData{
   {
     switch ($key) {
       case 'owner':
-        return ($this->ownerType == self::ownerTypeTemplate) ? $this->templates->get($this->get($key)) : $this->pages->get($this->get($key));
+        $ownerId = $this->get($key);
+        if (is_null($ownerId)) return $ownerId;
+        if ($this->ownerType == self::ownerTypeTemplate) {
+          $owner = $this->templates->get($ownerId);
+          if ($owner instanceof Template) return $owner;
+          else return $this->pages->get($ownerId);
+        } else {
+          return $this->pages->get($ownerId);
+        }
         break;
 
       case 'renderPages':
@@ -154,6 +132,12 @@ class Widget extends WireData{
         break;
 
       case 'parent':
+        $parentId = $this->get($key);
+        if ($parentId === 1) {
+          $parent = new Widget();
+          $parent->id = 1;
+          return $parent;
+        }
         return $this->widgets->get($this->get($key));
         break;
 
@@ -167,20 +151,29 @@ class Widget extends WireData{
     }
   }
 
+  public static function reportIfErrors(Widget $widget)
+  {
+    if (is_null($widget->get('owner'))) throw new WireException("Please set owner property before saving into db.");
+    $incompatible = "Incompatible pair of owner and ownerType property values. Owner: `$widget->owner`. OwnerType: `$widget->ownerType`.";
+    if ($widget->ownerType == self::ownerTypeTemplate) {
+      if ($widget->owner instanceof Template) return;
+      else throw new WireException($incompatible);
+    } else {
+      if ($widget->owner instanceof NullPage) throw new WireException("The owner cannot be NullPage. Check if you asigned a correct value for owner property. The current value is " . $widget->get('owner'));      
+    }
+  }
+
   protected function getChildren()
   {
-    if (is_null($this->owner)) throw new WireException("Please set owner property before getting, adding or removing child widgets.");
-    if (is_null($this->ownerType)) throw new WireException("Please set ownerType property before getting, adding or removing child widgets.");
-    if ($this->childrenCache instanceof WidgetsChildrenArray) return $this->childrenCache;
-    $this->childrenCache = new WidgetsChildrenArray();
-    $this->childrenCache->ownerType = $this->ownerType;
-    $this->childrenCache->owner = $this->owner;
+    if ($this->childrenCache instanceof WidgetChildrenArray) return $this->childrenCache;
+    $this->childrenCache = new WidgetChildrenArray();
     return $this->childrenCache;
   }
 
-  public function addClass(string $class)
+  public function addClass($class)
   {
-    $classes = split(' ', $this->class);
+    $class = (string) $class;
+    $classes = explode(' ', $this->class);
     if (strpos($class, ' ') !== false) $class = split(' ', $class);
     else $class = (array) $class;
     foreach ($class as $c) {
@@ -189,8 +182,9 @@ class Widget extends WireData{
     $this->set('class', implode(' ', array_unique($classes)));
   }
 
-  public function removeClass(string $class)
+  public function removeClass($class)
   {
+    $class = (string) $class;
     $classes = split(' ', $this->class);
     if (strpos($class, ' ') !== false) $class = split(' ', $class);
     else $class = (array) $class;
@@ -203,22 +197,27 @@ class Widget extends WireData{
 
   public function addRender($page)
   {
-    if(is_array($items) && self::iterable($items) && $page instanceof WireArray) {
-      $this->renderPagesCache->import($page);
-      return $this;
+    if(is_array($page) && WireArray::iterable($page)) {
+      $items = $page;
+    } else {
+      $items = new PageArray();
+      $items->add($page);
     }
-    if ($this->renderPagesCache->has($page)) return $this;
-    $this->renderPagesCache->add($page);
+    $this->renderPagesCache->import($items);
+    $this->set('renderPages', (string) $this->renderPagesCache);
     return $this;
   }
 
   public function removeRender($page)
   {
-    if(is_array($items) && self::iterable($items) && $page instanceof WireArray) {
-      foreach ($page as $p) $this->renderPagesCache->remove($p);
-      return $this;
+    if(is_array($page) && WireArray::iterable($page)) {
+      $items = $page;
+    } else {
+      $items = new PageArray();
+      $items->add($page);      
     }
-    $this->renderPagesCache->remove($page);
+    foreach ($items as $item) $this->renderPagesCache->remove($item);
+    $this->set('renderPages', (string) $this->renderPagesCache);
     return $this;
   }
 
@@ -267,7 +266,7 @@ class Widget extends WireData{
     $data['owner'] = $this->owner->id;
     $data['ownerType'] = $this->ownerType;
     $data['parent'] = $this->parent->id;
-    $data['renderPages'] = (string) $this->renderPages;
+    $data['renderPages'] = $this->get('renderPages');
     $data['grid'] = $this->grid;
     $data['class'] = $this->class;
     $data['options'] = $this->options->getArray();
@@ -283,7 +282,7 @@ class Widget extends WireData{
     if (isset($data['renderPages'])) foreach ($this->pages->find("id=" . $data['renderPages']) as $p) $this->addRender($p);
     if (isset($data['class'])) $this->addClass($data['class']);
     if (isset($data['grid'])) $this->grid = $data['grid'];
-    if (isset($data['options'])) $this->options->setArray();
+    if (isset($data['options'])) $this->options->setArray($data['options']);
     return $this;
   }
 
@@ -294,8 +293,7 @@ class Widget extends WireData{
   public function save()
   {
     if ($this->children->count()) foreach ($this->children as $child) $child->save();
-    $this->widgets->save($this);
-    return $this;
+    return $this->widgets->save($this);
   }
 
   protected function setTemplateVariables($templateFile)
@@ -319,5 +317,12 @@ class Widget extends WireData{
       $file = $this->getMarkupsPath() . "default.php";
     }
     return $this->setTemplateVariables(new TemplateFile($file));
+  }
+
+  public function __debugInfo()
+  {
+    $info = parent::__debugInfo();
+    $info['data']['owner'] = $this->owner->__debugInfo();
+    return $info;
   }
 }
