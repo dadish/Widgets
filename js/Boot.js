@@ -5,10 +5,10 @@
 //==============
 
 requirejs.config({
-	baseUrl : '/site/a',
+	baseUrl : '/site/modules/Widgets/',
 	paths : {
-
 		'requirejs' : 'deps/requirejs/require',
+		'text' : 'deps/requirejs-text/text',
 		'jquery' : 'deps/jquery/dist/jquery.min',
 		'underscore' : 'deps/underscore/underscore',
 		'backbone' : 'deps/backbone/backbone'

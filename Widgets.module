@@ -5,26 +5,22 @@
  * Widgets - A ProcessWire module.
  * Helps to build responsive websites with ease.
  * 
+ * @todo implement a remove method!
  * @todo widgets module api should derive from $page->widgets
+ * @todo implement an `assets(string)` method that returns the necessary js and css for editing widgets at the front end
  * @todo implement a `new()` method that returns a new widget with owner assigned. Consider all three types of owners
  * @todo implement a `css()` method that returns a css string for all involved widgets
  * @todo implement a `cssMin()` method that returns a minified css string of the `css()` method
  * @todo implement widget sorting capabilities
  */
 
-class Widgets extends WireData implements Module {
+class Widgets extends WidgetArray implements Module {
 
   /**
    * Table created by this module
    *
    */
   const dbTableName = 'widgets';
-
-  /**
-   * A cache of widgets
-   * 
-   */
-  protected $widgets;
 
   /**
    * Quick reference to database
@@ -56,7 +52,6 @@ class Widgets extends WireData implements Module {
   public function __construct() {
     parent::__construct();
     $this->database = wire('database');
-    $this->widgets = new WidgetArray();
   }
 
   /**
@@ -65,38 +60,33 @@ class Widgets extends WireData implements Module {
    */
   public function init() {
     $this->addHookProperty('Page::widgets', $this, 'pageWidgets');
+    $this->addHookProperty('Template::widgets', $this, 'templateWidgets');
   }
 
   protected function pageWidgets(HookEvent $event)
   {
     $page = $event->object;
-    $this->fetchAll($page);
-    $event->return = new PageWidgets($page);
+    $ownerId = $this->fetchAllForPage($page);
+    $event->return = new PageWidgets($ownerId);
   }
 
-  public function get($key)
+  protected function templateWidgets(HookEvent $event)
   {
-    $value = $this->widgets->get($key);
-    if ($value instanceof Widget) return $value;
-    $value = $this->fetch($key);
-    if ($value instanceof Widget) return $value;
-    return parent::get($key);
-  }
-
-  public function withOwner($ownerId)
-  {
-    return $this->widgets->filter("owner=$ownerId");
+    $template = $event->object;
+    $ownerId = $this->fetchAllForTemplate($template);
+    $event->return = new TemplateWidgets($ownerId);
   }
 
   public function save(Widget $widget)
   {
-    Widget::reportIfErrors($widget);
+    $widget->reportIfErrors();
     if (!$widget->isChanged()) return $widget;
     $table = self::dbTableName;
     $arr = $widget->getArray();
     $data = array(
       'renderPages' => $arr['renderPages'],
-      'grid' => $arr['grid'],
+      'breakpoints' => $arr['breakpoints'],
+      'breakpointsString' => $arr['breakpointsString'],
       'options' => $arr['options'],
       'class' => $arr['class'],
       'className' => $widget->className()
@@ -117,48 +107,58 @@ class Widgets extends WireData implements Module {
     $stmt->execute($params);
     $id = $this->database->lastInsertId();
     $widget->set('id', $id);
+    if (!$this->has($widget)) $this->add($widget);
     $widget->resetTrackChanges();
-    $this->includeWidget($widget);
     return $widget;
   }
 
+  public function delete($key)
+  {
+    if (!$this->has($key)) return $this;
+    $table = self::dbTableName;
+    $widget = $this->get($key);
+    $stmt = $this->database->prepare("DELETE FROM $table WHERE id = :widget_id LIMIT 1");
+    $stmt->execute(array('widget_id' => $widget->id));
+    if ($stmt->rowCount()) return $this->remove($key);
+    else return $this;
+  }
+
   /**
-   * @todo Figure out better way for checking the ancestor widgets.
+   * 
    * 
    */
-  protected function fetchAll(Page $page)
+  protected function fetchAllForPage(Page $page)
   {
+    // Try to get widgets assigned to Page itself
+    // If there are no widgets then get widgets for Page's template
+    $widgets = $this->fetchAllByOwner($page->id, Widget::ownerTypePage);
+    if ($widgets->count()) {
+      return $page->id;
+    } else {
+      $this->fetchAllByOwner($page->template->id, Widget::ownerTypeTemplate);
+      return $page->template->id;
+    }
+  }
+
+  protected function fetchAllForTemplate(Template $template)
+  {
+    // Try to get widgets assigned to Template.
+    $this->fetchAllByOwner($template->id, Widget::ownerTypeTemplate);
+    return $template->id;
+  }
+
+  public function fetchAllByOwner($owner, $ownerType)
+  {
+    $owner = (integer) $owner;
+    $ownerType = (integer) $ownerType;
     $table = self::dbTableName;
 
-    // check if there are any widgets assigned directly to this page
-    $sql = "SELECT * FROM $table WHERE owner = $page->id AND ownerType = " . Widget::ownerTypePage;
+    $sql = "SELECT * FROM $table WHERE owner = $owner AND ownerType = $ownerType";
     $stmt = $this->database->prepare($sql);
     $stmt->execute();
     if ($stmt->rowCount()) {
-      $page->WidgetsOwnerId = $page->id;
       return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
-
-    // check if there is any widgets assigned to any ancestors
-    foreach ($page->parents() as $parent) {
-      $sql = "SELECT * FROM $table WHERE owner = $parent->id AND ownerType = " . Widget::ownerTypeAncestor;
-      $stmt = $this->database->prepare($sql);
-      $stmt->execute();
-      if ($stmt->rowCount()) {
-        $page->WidgetsOwnerId = $parent->id;
-        return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
-      }
-    }
-
-    // check if there is any widgets assigned to page's template
-    $sql = "SELECT * FROM $table WHERE owner = $page->template->id AND ownerType = " . Widget::ownerTypeTemplate;
-    $stmt = $this->database->prepare($sql);
-    $stmt->execute();
-    if ($stmt->rowCount()) {
-      $page->WidgetsOwnerId = $page->template->id;
-      return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
-    }
-
     // if there is no widgets then return empty array of widgets
     return new WidgetArray();
   }
@@ -185,7 +185,7 @@ class Widgets extends WireData implements Module {
     $data['ownerType'] = $raw['ownerType'];
     $data['parent'] = $raw['parent'];
     $data['renderPages'] = $raw['data']['renderPages'];
-    $data['grid'] = $raw['data']['grid'];
+    $data['breakpoints'] = $raw['data']['breakpoints'];
     $data['class'] = $raw['data']['class'];
     $data['options'] = $raw['data']['options'];
   
@@ -193,7 +193,7 @@ class Widgets extends WireData implements Module {
     $widget = $this->modules->get($className);
     $widget->setArray($data);
     $widget->resetTrackChanges();
-    $this->includeWidget($widget);
+    if (!$this->has($widget)) $this->add($widget);
     return $widget;
   }
 
@@ -204,11 +204,37 @@ class Widgets extends WireData implements Module {
     return $widgets;
   }
 
-  protected function includeWidget(Widget $widget)
+  public function assets($type = null)
   {
-    if ($widget->isNew()) return $this;
-    if ($this->widgets->has($widget)) return $this;
-    return $this->widgets->add($widget);
+    $out = "";
+    if (is_null($type)) {
+      $out .= $this->cssAssets();
+      $out .= $this->jsAssets();
+    } else if ($type === 'css') {
+      $out .= $this->cssAssets();
+    } else if ($type === 'js') {
+      $out .= $this->jsAssets();
+    }
+    return $out;
+  }
+
+  protected function jsAssets()
+  {
+    $jsConfig = array(
+      'toolbarUrl' => $this->config->urls->admin . 'setup/widgets/?modal=1'
+      );
+    $scripts = "<script>var WidgetsConfig = JSON.parse('". json_encode($jsConfig) ."');</script>";
+    if ($this->config->debug) {
+      $scripts .= "<script data-main='". $this->config->urls->Widgets ."/js/Boot' src='" . $this->config->urls->Widgets . "/deps/requirejs/require.js'></script>";
+    } else {
+      $scripts .= "<script src'". $this->config->urls->Widgets ."build/widgets.js'></script>";
+    }
+    return $scripts;
+  }
+
+  protected function cssAssets()
+  {
+    return "<link rel='stylesheet' type='text/css' href='". $this->config->urls->Widgets ."css/widgets.css' />";
   }
 
   /**

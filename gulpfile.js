@@ -31,7 +31,7 @@ var config = {
 
 	build_dir : 'build',
 
-	build_prefix : 'www', // could be your app name
+	build_prefix : 'widgets', // could be your app name
 
 	// the directory for watching after js files
 	js_dir : 'js', 
@@ -46,67 +46,8 @@ var config = {
 	scss_dir : 'scss', 
 
 	// the directory where the css will be outputted
-	css_dir : 'css',
-
-	// Array of names that tasks like build-css and build-dev-css should
-	// ignore. Give only the names of the file you want to ignore. Omit 
-	// extension
-	css_ignore : ['print'],
-
-	// the string that will be appended to every 
-	// scss files before they are compiled. Useful
-	// for importing vars, mixins, susy ...
-	sass_prepend : '@import "base";\n',
-
-	// INJECT
-	inject_css : ['index.html', '_head.php'], //glob
-	inject_js : ['index.html', '_foot.php'], //glob
-
-	inject_css_dest : './',
-	inject_js_dest : './',
-
-	inject_css_tags : ['<!-- inject-css -->', '<!-- inject-css-end -->'],
-	inject_js_tags : ['<!-- inject-js -->', '<!-- inject-js-end -->']
+	css_dir : 'css'
 };
-
-
-// injector
-// ========
-// Injects css or js html tags into str
-// between two tags
-// @param startTag
-// @param endTag
-// @param injectStr The string that will be injected.
-// @return function
-function injector (startTag, endTag, injectStr) {
-	var str, startIndex, endIndex, tag;
-	return function (data) {
-		str = data.contents.toString();
-		startIndex = str.indexOf(startTag);
-		endIndex = str.indexOf(endTag);
-
-		// if any of the tags did not match
-		if (startIndex === -1 || endIndex === -1) return this.queue(data);
-
-		// start insering from the end of the first tag
-		startIndex += startTag.length;
-
-		// Convert str to array
-		str = str.split('');
-
-		// inject the css
-		str.splice(startIndex, endIndex - startIndex, injectStr.split());
-
-		// flatten
-		str = _.flatten(str);
-
-		// convert str to string
-		str = str.join('');
-
-		data.contents = new Buffer(str);
-		this.queue(data);
-	};
-}
 
 
 // reporter
@@ -114,22 +55,6 @@ function injector (startTag, endTag, injectStr) {
 // Logs a message prettified with gulp-utils
 function reporter (subject, action, object) {
 	util.log(util.colors.cyan(subject) + ' ' + util.colors.yellow(action) + ' ' + object);
-}
-
-
-// sass prepend
-// ============
-// Prepends the string for before 
-// an scss file is comiled by gulp-sass
-// Useful when you need to import vars, mixins, susy...
-function sassPrepend (data) {
-	var str, path, filename, prepend;
-	path = data.path.split('/');
-	if (path[path.length - 1].indexOf('_') === 0) return;
-	str = data.contents.toString();
-	str = config.sass_prepend + str;
-	data.contents = new Buffer(str);
-	this.queue(data);
 }
 
 
@@ -166,7 +91,7 @@ function sassWriteReporter(data) {
 var writeDevCss = false;
 function sassCreateDevCss (data) {
 	var paths, path, str, itemArr, file, fileExists;
-	path = process.cwd() + '/' + config.build_dir + '/' + config.build_prefix + '.css';
+	path = process.cwd() + '/' + config.css_dir + '/' + config.build_prefix + '.css';
 	fileExists = fs.existsSync(path);
 	if (!data.event || data.event === 'change') {
 		if (fileExists) {
@@ -228,7 +153,6 @@ gulp.task('watch-sass', function () {
 		.pipe(watch(scssGlob))
 		.pipe(tree(scssGlob, '/scss'))
 		.pipe(through(sassChangeReporter))
-		.pipe(through(sassPrepend))
 		.pipe(sass({
 			errLogToConsole : true,
 			sourceComments : true
@@ -279,12 +203,26 @@ gulp.task('remove-build-css', function (cb) {
 });
 
 
+// gulp remove-dev-css
+// =====================
+// Removes the files that are previosly created by 
+// `gulp build-css`. Runs before `gulp build-sass`.
+gulp.task('remove-dev-css', function (cb) {
+	var glob;
+	glob = [config.css_dir + '/'+ config.build_prefix +'.*.css', config.css_dir + '/'+ config.build_prefix +'.css',];
+	del(glob, function (options, paths) {
+		reporter('Sass', 'remove', paths);
+		cb();
+	});
+});
+
+
 // gulp  build-css-dev
 // ===================
 // Creates a css file for development mode.
 // This is a file that includes all other css files 
 // that are in the build directory
-gulp.task('build-css-dev', ['remove-build-css'], function (cb) {
+gulp.task('build-css-dev', ['remove-dev-css', 'remove-build-css'], function (cb) {
 	var file, path, str, itemArr, Readable;
 	Readable = require('stream').Readable;
 	path = config.build_prefix + '.css';
@@ -328,9 +266,6 @@ gulp.task('build-css', ['remove-build-css'], function (cb) {
 		if (_(config.css_ignore).indexOf(itemArr[0]) !== -1) return memo;
 		return memo += '@import "' + item + '";\n';
 	}, '');
-
-	// Prepend the sass_prepend
-	str = config.sass_prepend + str;
 
 	file = ReadableStream({objectMode : true});
 	file._read = function () {
@@ -447,94 +382,6 @@ gulp.task('build-js-rev', ['build-js'], function (cb) {
 });
 
 
-// gulp inject-css-dev
-// ===================
-// Inserts a css files
-// The place to insert is determined by tag and tag_end
-// from the injectConf. Modify injectConf to meet your needs
-// Replaces everything between those tags.
-gulp.task('inject-css-dev', function (cb) {
-	var files, injectStr;
-
-	files = glob.sync(config.build_dir + '/' + config.build_prefix + '.css');
-
-	injectStr = _(files).reduce(function (memo, filename) {
-		return memo += '<link href="/'+ filename +'" rel="stylesheet" type="text/css"></link>\n';
-	}, '\n');
-
-	gulp.src(config.inject_css)
-		.pipe(through(injector(config.inject_css_tags[0], config.inject_css_tags[1], injectStr)))
-		.pipe(gulp.dest(config.inject_css_dest))
-		.on('end', cb);
-});
-
-
-// gulp inject-css-build
-// =====================
-// Inserts a css files
-// The place to insert is determined by tag and tag_end
-// from the injectConf. Modify injectConf to meet your needs
-// Replaces everything between those tags.
-gulp.task('inject-css-build', function (cb) {
-	var files, injectStr;
-
-	files = glob.sync(config.build_dir + '/' + config.build_prefix + '.*.css');
-
-	injectStr = _(files).reduce(function (memo, filename) {
-		return memo += '<link href="/'+ filename +'" rel="stylesheet" type="text/css"></link>\n';
-	}, '\n');
-
-	gulp.src(config.inject_css)
-		.pipe(through(injector(config.inject_css_tags[0], config.inject_css_tags[1], injectStr)))
-		.pipe(gulp.dest(config.inject_css_dest))
-		.on('end', cb);
-});
-
-
-// gulp inject-js-dev
-// ==================
-// Inserts a js files
-// The place to insert is determined by tag and tag_end
-// from the injectConf. Modify injectConf to meet your needs
-// Replaces everything between those tags.
-gulp.task('inject-js-dev', function (cb) {
-	var files, injectStr;
-
-	files = glob.sync('deps/requirejs/require.js');
-
-	injectStr = _(files).reduce(function (memo, filename) {
-		return memo += '<script data-main="/js/Boot" src="/site/a/'+ filename +'"></script>\n';
-	}, '\n');
-
-	gulp.src(config.inject_js)
-		.pipe(through(injector(config.inject_js_tags[0], config.inject_js_tags[1], injectStr)))
-		.pipe(gulp.dest(config.inject_js_dest))
-		.on('end', cb);
-});
-
-
-// gulp inject-js-build
-// ====================
-// Inserts a js files
-// The place to insert is determined by tag and tag_end
-// from the injectConf. Modify injectConf to meet your needs
-// Replaces everything between those tags.
-gulp.task('inject-js-build', function (cb) {
-	var files, injectStr;
-
-	files = glob.sync(config.build_dir + '/' + config.build_prefix + '.*.js');
-
-	injectStr = _(files).reduce(function (memo, filename) {
-		return memo += '<script src="/'+ filename +'"></script>\n';
-	}, '\n');
-
-	gulp.src(config.inject_js)
-		.pipe(through(injector(config.inject_js_tags[0], config.inject_js_tags[1], injectStr)))
-		.pipe(gulp.dest(config.inject_js_dest))
-		.on('end', cb);
-});
-
-
 // gulp dev
 // ========
 // Set everything for develpment environment
@@ -545,8 +392,6 @@ gulp.task('dev', function (cb) {
 
 	runSequence(
 		['build-css-dev', 'remove-build-js'],
-		'inject-css-dev',
-		'inject-js-dev',
 		cb
 		);
 });
@@ -562,8 +407,6 @@ gulp.task('build', function (cb) {
 
 	runSequence(
 		['build-css-rev', 'build-js-rev'],
-		'inject-css-build',
-		'inject-js-build',
 		cb
 		);
 });

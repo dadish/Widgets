@@ -1,0 +1,131 @@
+<?php
+
+class ProcessWidgets extends Process implements Module {
+
+  protected $widgets = null;
+
+  protected $jsSettings = array();
+  
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Process Widgets',        // printable name/title of module
+      'version' => 001,       // version number of module
+      'summary' => _('Helps to manage widgets.'),      // one sentence summary of module
+      'icon' => 'cubes',
+      'requires' => array('Widgets'),
+      'autoload' => 'process=ProcessPageEdit|ProcessTemplate',
+      'page' => array(
+        'parent' => 'setup',
+        'name' => 'widgets',
+        'title' => 'Widgets',
+        'status' => array('hidden')
+        )
+      );
+  }
+
+  public function init()
+  {
+    parent::init();
+    $this->requireHelperClasses();
+    $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookPageWidgetsTab');
+    $this->widgets = $this->modules->get('Widgets');
+  }
+
+  public function setJsSettings()
+  {
+    $this->config->js($this->className(), $this->jsSettings);
+  }
+
+  public function execute()
+  {
+    $action = $this->sanitizer->text($this->input->action);
+
+    switch ($action) {
+      case 'newWidget':
+        return $this->executeNewWidget();
+        break;
+
+      case 'deleteWidget':
+        return $this->executeDeleteWidget();
+        break;
+
+      default:
+        return '';
+        break;
+    }
+  }
+
+  protected function executeNewWidget()
+  {
+    $owner = (integer) $this->sanitizer->text($this->input->owner);
+    $ownerType = (integer) $this->sanitizer->text($this->input->ownerType);
+    
+    $widget = $this->modules->get('WidgetHeading');
+    $widget->owner = $owner;
+    $widget->ownerType = $ownerType;
+    $widget->save();
+
+    return InputfieldWidgets::renderWidget($widget);
+  }
+
+  protected function executeDeleteWidget()
+  {
+    return false;
+  }
+
+  protected function buildWidgetTab($target = null)
+  {
+    $this->modules->get('InputfieldTextarea');
+    $wrapper = new InputfieldWrapper();
+    $id = $this->className();
+    $wrapper->attr('id', $id);
+    $title = $this->_('Widget Settings'); // Tab Label: Widgets Settings
+    $wrapper->attr('title', $title); 
+
+    $widgetsField = new InputfieldWidgets();
+    $widgetsField->name = "widgets";
+    $widgetsField->label = "Widgets";
+
+    if ($target instanceof Page || $target instanceof Template) {
+      $widgets = $target->widgets;
+    } else {
+      throw new WireException("This scenario has not been considered.");
+    }
+    foreach ($widgets as $widget) {
+      $widgetsField->add($widget);
+    }
+
+    $wrapper->add($widgetsField);
+
+    return $wrapper;
+  }
+
+  public function hookPageWidgetsTab(HookEvent $event)
+  {
+    // Find out what page we are editing
+    $id = (int) $this->input->post('id');
+    if(!$id) $id = (int) $this->input->get('id');
+    $page = wire('pages')->get("id=$id");
+    $this->jsSettings['owner'] = $page->id;
+    $this->jsSettings['ownerType'] = Widget::ownerTypePage;
+    $this->setJsSettings();
+
+    $form = $event->arguments[0];
+    $processPageEdit = $event->object;
+    $widgetsTab = $this->buildWidgetTab($page);
+    $processPageEdit->addTab($widgetsTab->attr('id'), 'Widgets');
+    $form->insertBefore($widgetsTab, $form->get('submit_save'));
+    $event->return = $form;
+  }
+
+  protected function requireHelperClasses()
+  {
+    require_once(__DIR__ . "/Breakpoints.php");
+    require_once(__DIR__ . "/Widget.php");
+    require_once(__DIR__ . "/WidgetArray.php");
+    require_once(__DIR__ . "/PageWidgets.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldWidget.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldWidgets.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldBreakpoints.php");
+  }
+}

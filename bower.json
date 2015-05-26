@@ -1,16 +1,21 @@
 {
-  "name": "site",
+  "name": "Widgets",
   "version": "0.0.1",
-  "authors": ["author"],
-  "description": "A starter kit for webapps by Yakyn Labs.",
-  "moduleType": ["amd"],
-  "license": "ISC",
-  "private": true,
+  "authors": [
+    "Nurguly Dadish Ashyrov <nurguly.ashyrov@gmail.com"
+  ],
+  "description": "Widgets - Helps to build responsive web sites with ease.",
+  "moduleType": [
+    "amd"
+  ],
+  "license": "MIT",
+  "private": false,
   "dependencies": {
-    "jquery": "1.11.1",
-    "backbone": "~1.1.2",
-    "underscore": "~1.7.0",
-    "requirejs": "~2.1.11",
-    "almond": "~0.2.9"
+    "almond": "~0.3.1",
+    "backbone": "1.2.0",
+    "requirejs-text": "~2.0.14",
+    "underscore": "1.8.3",
+    "requirejs": "2.1.17",
+    "jquery": "1.11.3"
   }
 }

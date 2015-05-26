@@ -1,0 +1,20 @@
+.InputfieldWidgetsAddLink{
+  display: block;
+  margin : 1rem 0rem;
+}
+
+.InputfieldWidget textarea{
+  display : none;
+}
+
+.InputfieldWidgetHeader .postfix{
+  font-size: 0.85em;
+}
+
+.InputfieldWidgetsItem{
+  margin-bottom : 1rem;
+}
+
+.InputfieldWidgetDelete{
+  float : right;
+}

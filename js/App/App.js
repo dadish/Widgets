@@ -1,16 +1,29 @@
 // js/App/App.js
 
 define(function (require, exports, module) {
+  
+  var
+    _                             = require('underscore'),
+    Widgets                       = require('js/Collections/Widgets'),
+    View                          = require('js/Views/Widgets'),
+    Config                        = require('js/Config')
+  ;
 
-	module.exports = {
+  module.exports = {
 
-		launch : function () {
-			
-			// Assign a global App variable so it is accessable from anywhere
-			window.app = this;
+    launch : function () {
+      window.wgts = this;
 
-			console.log('initialize app!');
-		}
-	};
+      wgts.config = Config;
+
+      wgts.widgets = new Widgets();
+      wgts.widgetViews = [];
+
+      $('.InputfieldWidgets').each(function () {
+        wgts.widgetViews.push(new View({el : this}));
+      });
+    }
+
+  };
 
 });

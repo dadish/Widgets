@@ -34,29 +34,3 @@ class WidgetArray extends WireArray {
     return implode('|', $arr);
   }
 }
-
-/**
- * WireArray of widgets instances for children widgets.
- * 
- */
-class WidgetChildrenArray extends WidgetArray
-{
-
-  public function __construct()
-  {
-    $this->data('owner', null);
-    $this->data('ownerType', null);
-  }
-
-  public function setOwner($value)
-  {
-    $this->data('owner', $value);
-    foreach ($this as $widget) $widget->owner = $value;
-  }
-
-  public function setOwnerType($value)
-  {
-    $this->data('ownerType', $value);
-    foreach ($this as $widget) $widget->ownerType = $value;
-  }
-}

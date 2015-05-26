@@ -1,0 +1,13 @@
+<% if (media === 'default') { %>
+<td>Default</td>
+<% } else { %>
+<td><input type="text" size="10" value="<%= media %>"/></td>
+<% } %>
+
+<td><input type="text" size="2" value="<%= span[0] %>"> of <input type="text" size="2" value="<%= span[1] %>"></td>
+
+<% if (media === 'default') { %>
+<td></td>
+<% } else { %>
+<td><a class="remove" href="#"><i class="fa fa-trash"></i></a></td>
+<% } %>
