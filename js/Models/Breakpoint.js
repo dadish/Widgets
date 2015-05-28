@@ -14,6 +14,13 @@ define(function (require, exports, module) {
         1  // denominator
       ],
       clear : 'none' // css clear property. Allowed: none, both, right, left.
+    },
+
+    toJSONWithClears : function () {
+      var json;
+      json = this.toJSON();
+      json.clearOptions = ['none', 'both', 'right', 'left'];
+      return json;
     }
 
   });

@@ -9,7 +9,24 @@ define(function (reqiure, exports, module) {
   
   module.exports = Backbone.Collection.extend({
 
-    model : Model
+    model : Model,
+
+    initialize : function () {
+      this.listenTo(wgts.events, 'widget:update', this.updateIfChanged);
+    },
+
+    updateIfChanged : function (widget) {
+      if (!widget.isChanged()) return wgts.events.trigger('widget:updated', widget, false);
+
+      function then (string) {
+        widget.parseWidget(string);
+        wgts.events.trigger('widget:updated', widget, true);
+      }
+
+      $.post(wgts.config.ajaxUrl + 'Update/', {
+        widget : JSON.stringify(widget.toJSON())
+      }, _.bind(then, this));
+    }
 
   });
 

@@ -3,25 +3,31 @@
 define(function (require, exports, module) {
   
   var
-    _                             = require('underscore'),
+    Backbone                      = require('backbone'),
     Widgets                       = require('js/Collections/Widgets'),
     View                          = require('js/Views/Widgets'),
-    Config                        = require('js/Config')
+    Config                        = require('js/Config'),
+    BatchUpdate                   = require('js/Views/WidgetsBatchUpdate'),
+    _                             = require('underscore')
   ;
 
   module.exports = {
 
+    events : _.extend({}, Backbone.Events),
+  
     launch : function () {
       window.wgts = this;
 
       wgts.config = Config;
 
       wgts.widgets = new Widgets();
-      wgts.widgetViews = [];
+      wgts.views = [];
 
       $('.InputfieldWidgets').each(function () {
-        wgts.widgetViews.push(new View({el : this}));
+        wgts.views.push(new View({el : this}));
       });
+
+      wgts.batchUpdate = new BatchUpdate({el : $('#wrap_WidgetsBatchUpdate')[0]});
     }
 
   };

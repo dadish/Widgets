@@ -4,13 +4,16 @@ class InputfieldBreakpoints extends InputfieldTextarea {
 
   protected $widget;
 
-  public function __construct()
+  public function __construct($widget = null)
   {
     parent::__construct();
+    if (!is_null($widget)) $this->setWidget($widget);
     $this->label = $this->_('Breakpoints');
   }
 
   public function ___render() {
+    $this->attr('id', $this->className() . "_" . $this->widget->id);
+
     $out = "";
     $table = $this->modules->get('MarkupAdminDataTable');
     $table->setEncodeEntities(false);
@@ -26,17 +29,17 @@ class InputfieldBreakpoints extends InputfieldTextarea {
       $arr = array();
       // Media
       if ($brk['media'] === 'default') $media = "Default";
-      else $media = "<input type='text' size='10' value='". $brk['media'] ."'/>";
+      else $media = "<input class='breakpointMedia' type='text' size='10' value='". $brk['media'] ."'/>";
       $arr[] = $media;
 
       // Span
-      $span = "<input type='text' size='2' value='". $brk['span'][0] ."'>"; 
+      $span = "<input class='breakpointSpan breakpointSpanNumerator' type='text' size='2' value='". $brk['span'][0] ."'>"; 
       $span .= " of "; 
-      $span .= "<input type='text' size='2' value='". $brk['span'][1] ."'>";
+      $span .= "<input class='breakpointSpan breakpointSpanDenominator' type='text' size='2' value='". $brk['span'][1] ."'>";
       $arr[] = $span;
 
       // Clear
-      $clear = "<select>";
+      $clear = "<select class='breakpointClear'>";
       foreach (array('none', 'left', 'right', 'both') as $clr) $clear .= "<option value='$clr'>$clr</option>";
       $clear .= "</select>";
       $arr[] = $clear;

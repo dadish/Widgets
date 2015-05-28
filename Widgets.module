@@ -89,7 +89,7 @@ class Widgets extends WidgetArray implements Module {
       'breakpointsString' => $arr['breakpointsString'],
       'options' => $arr['options'],
       'class' => $arr['class'],
-      'className' => $widget->className()
+      'className' => $arr['className']
       );
     $params = array(
       ':owner' => $arr['owner'],
@@ -114,13 +114,16 @@ class Widgets extends WidgetArray implements Module {
 
   public function delete($key)
   {
-    if (!$this->has($key)) return $this;
     $table = self::dbTableName;
     $widget = $this->get($key);
     $stmt = $this->database->prepare("DELETE FROM $table WHERE id = :widget_id LIMIT 1");
     $stmt->execute(array('widget_id' => $widget->id));
-    if ($stmt->rowCount()) return $this->remove($key);
-    else return $this;
+    if ($stmt->rowCount()) {
+      $this->remove($key);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   /**
@@ -163,10 +166,16 @@ class Widgets extends WidgetArray implements Module {
     return new WidgetArray();
   }
 
+  public function get($key)
+  {
+    if ($this->has($key)) return parent::get($key);
+    return $this->fetch($key);
+  }
+
   protected function fetch($key)
   {
     $table = self::dbTableName;
-    if ($key instanceof Widget) $key = $this->getItemKey($key);
+    if (is_object($key)) $key = $this->getItemKey($key);
     $sql = "SELECT * FROM $table WHERE id = :id";
     $stmt = $this->database->prepare($sql);
     $stmt->execute(array(
@@ -193,7 +202,7 @@ class Widgets extends WidgetArray implements Module {
     $widget = $this->modules->get($className);
     $widget->setArray($data);
     $widget->resetTrackChanges();
-    if (!$this->has($widget)) $this->add($widget);
+    if (!$this->has($widget)) $this->append($widget);
     return $widget;
   }
 

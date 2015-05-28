@@ -235,6 +235,7 @@ class Widget extends WireData{
     $data['breakpoints'] = $this->breakpoints->getArray();
     $data['breakpointsString'] = (string) $this->breakpoints;
     $data['class'] = $this->class;
+    $data['className'] = $this->className();
     $data['options'] = $this->options->getArray();
     return $data;
   }

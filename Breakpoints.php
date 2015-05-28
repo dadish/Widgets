@@ -36,7 +36,7 @@ class BreakpointArray extends WireArray {
 
   public function populate($breakpoints)
   {
-    $this->remove('default');
+    $this->removeAll();
 
     foreach ($breakpoints as $brk) {
       $breakpoint = $this->makeBlankItem();

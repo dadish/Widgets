@@ -6,7 +6,19 @@ define(function (require, exports, module) {
   
   module.exports = _.extend(config.ProcessWidgets, {
 
-    ajaxUrl : config.urls.admin + 'setup/widgets/'
+    ajaxUrl : config.urls.admin + 'setup/widgets/',
+
+    status : {
+      start : 'start',
+      progress : 'progress',
+      end : 'end',
+      changed : 'changed',
+      unchanged : 'unchanged'
+    },
+
+    updateInterval : 10000,
+
+    batchUpdate : false
 
   });
 

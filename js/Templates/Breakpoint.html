@@ -1,10 +1,22 @@
 <% if (media === 'default') { %>
 <td>Default</td>
 <% } else { %>
-<td><input type="text" size="10" value="<%= media %>"/></td>
+<td><input class="breakpointMedia" type="text" size="10" value="<%= media %>"/></td>
 <% } %>
 
-<td><input type="text" size="2" value="<%= span[0] %>"> of <input type="text" size="2" value="<%= span[1] %>"></td>
+<td>
+  <input class="breakpointSpan breakpointSpanNumerator" type="text" size="2" value="<%= span[0] %>">
+    of 
+  <input class="breakpointSpan breakpointSpanDenominator" type="text" size="2" value="<%= span[1] %>">
+</td>
+
+<td>
+  <select class="breakpointClear">
+    <% _(clearOptions).each(function (option) { %>
+    <option value="<%= option %>" <% if (option === clear) { %>selected="selected"<% } %>><%= option %></option>
+    <% }); %>    
+  </select>
+</td>
 
 <% if (media === 'default') { %>
 <td></td>

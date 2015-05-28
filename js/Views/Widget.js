@@ -4,7 +4,8 @@ define(function (require, exports, module) {
   
   var
     Backbone                      = require('backbone'),
-    Breakpoint                    = require('js/Views/Breakpoint'),
+    WidgetUpdate                  = require('js/Views/WidgetUpdate'),
+    Breakpoints                   = require('js/Views/Breakpoints'),
     BreakpointModel               = require('js/Models/Breakpoint'),
     Model                         = require('js/Models/Widget')
   ;
@@ -12,56 +13,56 @@ define(function (require, exports, module) {
   module.exports = Backbone.View.extend({
 
     events : {
-      'click .addBreakpointButton' : 'addBreakpoint'
+      'click .InputfieldWidgetDelete' : 'remove'
     },
 
     initialize : function (options) {
+      var id, jsonString;
       this.$('.InputfieldHeader').addClass('InputfieldStateToggle');
-      this._breakpoints = []; // a cache of breakpoint views
       this.model = new Model();
-      this.populateBreakpoints();
-      this.render();
-      this.attacheEvents();
-    },
 
-    attacheEvents : function () {
-      this.listenTo(this.model.get('breakpoints'), 'add', this.renderBreakpoint);
-    },
+      id = this.$el.attr('data-id');
+      jsonString = this.$('#InputfieldWidget_' + id).val();
+      this.model.parseWidget(jsonString);
+      this.breakpoints = new Breakpoints({
+        collection : this.model.get('breakpoints'),
+        el : this.$('.InputfieldContent .Inputfields .InputfieldBreakpoints')[0]
+      });
 
-    populateBreakpoints : function () {
-      this._breakpoints = this.model.get('breakpoints').map(function (model) {
-        return new Breakpoint({model : model});
+      this.$update = new WidgetUpdate({
+        el : this.$('#wrap_InputfieldUpdate_' + this.model.id),
+        model : this.model
       });
     },
 
-    renderBreakpoint : function (breakpoint) {
-      var $breakpoints, breakpoint;
-      $breakpoints = this.$('.WidgetBreakpoints');
-      breakpoint = new Breakpoint({model : new BreakpointModel()});
-      this._breakpoints.push(breakpoint);
-      $breakpoint = breakpoint.render().$el;
-      $breakpoints.find('tbody').append($breakpoint).trigger('addRows', [$breakpoint]);
-    },
-
     addBreakpoint : function (ev) {
+      ev.preventDefault();
       this.model.get('breakpoints').add(new BreakpointModel());
     },
 
-    render : function () {
-      var breakpoints, $breakpoints, $settings;
-      
-      $breakpoints = this.$('.WidgetBreakpoints');
-      $settings = this.$('.WidgetSettings').empty();
-      breakpoints = document.createDocumentFragment();
-      
-      _(this._breakpoints).each(function (breakpoint, index) {
-        breakpoints.appendChild(breakpoint.render().el);
-      }, this);
-
-      $breakpoints.find('tbody').empty().append(breakpoints);
-      return this;
+    remove : function (ev) {
+      var alertMsg, alerted;
+      ev.preventDefault();
+      function then (data) {
+        alertMsg = "Something went wrong. Could not delete Widget with the id " + this.model.id + ". \n Please try again.";
+        try{
+          data = JSON.parse(data);
+        }catch (e) {
+          alerted = true;
+          alert(alertMsg);
+        }
+        if (data.error !== false && !alerted) {
+          alert(alertMsg);
+        } else {
+          wgts.events.trigger('remove:widget', this);
+          this.$el.slideUp(_.bind(Backbone.View.prototype.remove, this));
+        }
+      }
+      $.get(wgts.config.ajaxUrl + '/Delete', {
+        widgetId : this.model.id
+      }, _.bind(then, this));
+      return false;
     }
-
   });
 
 });

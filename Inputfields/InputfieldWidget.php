@@ -12,13 +12,14 @@ class InputfieldWidget extends InputfieldTextarea {
 
   public function ___render() {
     $this->attr('value', json_encode($this->widget->getArray()));
-
+    $this->attr('id', "InputfieldWidget_" . $this->widget->id);
     $wrap = new InputfieldWrapper();
     $wrap->label = $this->label;
 
     // WidgetType
     $field = $this->modules->get('InputfieldSelect');
     $field->label = $this->_('Widget Type');
+    $field->attr('id', 'InputfieldType_' . $this->widget->id);
     $widgetTypes = array();
     foreach ($this->modules->findByPrefix('Widget') as $module) {
       $title = $module::getModuleInfo()['title'];
@@ -30,9 +31,15 @@ class InputfieldWidget extends InputfieldTextarea {
     $wrap->add($field);
 
     // Prepare breakpoints
-    $breakpoints = new InputfieldBreakpoints();
+    $breakpoints = new InputfieldBreakpoints($this->widget);
     $breakpoints->setWidget($this->widget);
     $wrap->add($breakpoints);
+
+    // UpdateButton
+    $button = $this->modules->get('InputfieldButton');
+    $button->attr('id', 'InputfieldUpdate_' . $this->widget->id);
+    $button->attr('value', $this->_('Update'));   
+    $wrap->add($button);
 
     return parent::___render() . $wrap->render();
   }

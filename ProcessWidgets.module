@@ -29,6 +29,9 @@ class ProcessWidgets extends Process implements Module {
     $this->requireHelperClasses();
     $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookPageWidgetsTab');
     $this->widgets = $this->modules->get('Widgets');
+
+    $this->jsSettings['updateInterval'] = 5000;
+    $this->jsSettings['notify'] = ($this->modules->has('SystemNotifications')) ? true : false;
   }
 
   public function setJsSettings()
@@ -38,24 +41,10 @@ class ProcessWidgets extends Process implements Module {
 
   public function execute()
   {
-    $action = $this->sanitizer->text($this->input->action);
-
-    switch ($action) {
-      case 'newWidget':
-        return $this->executeNewWidget();
-        break;
-
-      case 'deleteWidget':
-        return $this->executeDeleteWidget();
-        break;
-
-      default:
-        return '';
-        break;
-    }
+    return '';
   }
 
-  protected function executeNewWidget()
+  public function executeCreate()
   {
     $owner = (integer) $this->sanitizer->text($this->input->owner);
     $ownerType = (integer) $this->sanitizer->text($this->input->ownerType);
@@ -68,9 +57,21 @@ class ProcessWidgets extends Process implements Module {
     return InputfieldWidgets::renderWidget($widget);
   }
 
-  protected function executeDeleteWidget()
+  public function executeDelete()
   {
-    return false;
+    $widgetId = (integer) $this->sanitizer->text($this->input->widgetId);
+    if ($this->widgets->delete($widgetId)) return '{"error" : false}';
+    else return '{"error" : true}';
+  }
+
+  public function executeUpdate()
+  {
+    $arr = json_decode($this->sanitizer->textarea($this->input->widget), true);
+    $id = $arr['id'];
+    $widget = $this->widgets->get($id);
+    $widget->setArray($arr);
+    $widget->save();
+    return json_encode($widget->getArray());
   }
 
   protected function buildWidgetTab($target = null)
@@ -96,6 +97,13 @@ class ProcessWidgets extends Process implements Module {
     }
 
     $wrapper->add($widgetsField);
+
+    // WidgetsUpdate Button
+    $button = $this->modules->get('InputfieldButton');
+    $button->attr('id', 'WidgetsBatchUpdate');
+    $button->attr('value', $this->_('Update Widgets'));
+    $button->name = "WidgetsBatchUpdate";
+    $wrapper->add($button);
 
     return $wrapper;
   }

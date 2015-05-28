@@ -11,7 +11,11 @@ define(function (require, exports, module) {
   module.exports = Backbone.View.extend({
 
     events : {
-      'click .remove' : 'fadeRemove'
+      'click .remove' : 'fadeRemove',
+      'keyup .breakpointMedia' : 'updateMedia',
+      'keyup .breakpointSpanNumerator' : 'updateSpanNumerator',
+      'keyup .breakpointSpanDenominator' : 'updateSpanDenominator',
+      'change .breakpointClear' : 'updateClear'
     },
 
     attributes : {
@@ -22,12 +26,39 @@ define(function (require, exports, module) {
 
     template : _.template(html),
 
-    fadeRemove : function () {
-      this.$el.fadeOut(200, _.bind(this.remove, this));
+    updateMedia : function (ev) {
+      this.model.set('media', $(ev.target).val());
+    },
+
+    updateSpanNumerator : function (ev) {
+      var numerator;
+      numerator = parseInt($(ev.target).val(), 10);
+      this.model.set('span', [numerator, this.model.get('span')[1]]);
+    },
+
+    updateSpanDenominator : function (ev) {
+      var denominator;
+      denominator = parseInt($(ev.target).val(), 10);
+      this.model.set('span', [this.model.get('span')[0], denominator]);
+    },
+
+    updateClear : function (ev) {
+      this.model.set('clear', $(ev.target).val());
+    },
+
+    fadeRemove : function (ev) {
+      ev.preventDefault();
+
+      function then () {
+        wgts.events.trigger('remove:breakpoint', this);
+        this.remove();
+      }
+
+      this.$el.fadeOut(200, _.bind(then, this));
     },
 
     render : function () {
-      this.$el.empty().append(this.template(this.model.toJSON()));
+      this.$el.empty().append(this.template(this.model.toJSONWithClears()));
       return this;
     }
 
