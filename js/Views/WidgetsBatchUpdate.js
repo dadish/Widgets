@@ -24,7 +24,8 @@ define(function (require, exports, module) {
     },
 
     update : function () {
-      if (this._status !== status.end) return;
+      if (this._status !== status.end) return this.defaultMode();
+      if (!wgts.widgets.length) return this.defaultMode();
       this.fixButtonSize();
       this._status = status.progress;
       this.$button.empty().append(this.$spinner);
@@ -41,6 +42,10 @@ define(function (require, exports, module) {
       wgts.events.trigger('widgets:update');
     },
 
+    defaultMode : function () {
+      this.$button.removeClass('ui-state-active').addClass('ui-state-default');
+    },
+
     updated : function (widget, updated) {
       var all;
       if (this._status !== status.progress) return;
@@ -48,7 +53,7 @@ define(function (require, exports, module) {
       all = _(this._updates).every(function (value) { return value; });
       if (all) {
         this.$button.empty().append(this.$text);
-        this.$button.removeClass('ui-state-active').addClass('ui-state-default');
+        this.defaultMode();
         this._status = status.end;
         Notifications.render();
         wgts.config.batchUpdate = false;
