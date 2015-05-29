@@ -19,6 +19,7 @@ class InputfieldWidget extends InputfieldTextarea {
     $field->label = $this->_('Widget Type');
     $field->attr('id', 'InputfieldType_' . $this->widget->id);
     $field->required = true;
+    $field->columnWidth = 50;
     $widgetTypes = array();
     foreach ($this->modules->findByPrefix('Widget') as $module) {
       $title = $module::getModuleInfo()['title'];
@@ -27,6 +28,14 @@ class InputfieldWidget extends InputfieldTextarea {
     }
     $field->addOptions($widgetTypes);
     $field->attr('value', $this->widget->className());
+    $wrap->add($field);
+
+    // Settings button
+    $field = new InputfieldWidgetSettings();
+    $field->setWidget($this->widget);
+    $field->name = 'InputfieldSettings';
+    $field->label = $this->_('Settings');
+    $field->columnWidth = 50;
     $wrap->add($field);
 
     // Prepare breakpoints

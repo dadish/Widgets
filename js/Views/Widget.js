@@ -10,7 +10,8 @@ define(function (require, exports, module) {
     WidgetUpdate                  = require('js/Views/WidgetUpdate'),
     Breakpoints                   = require('js/Views/Breakpoints'),
     BreakpointModel               = require('js/Models/Breakpoint'),
-    Model                         = require('js/Models/Widget')
+    Model                         = require('js/Models/Widget'),
+    Magnific                      = require('magnific-popup')
   ;
 
   module.exports = Backbone.View.extend({
@@ -46,6 +47,11 @@ define(function (require, exports, module) {
       if (subContainer.length) {
         wgts.addContainer(subContainer[0]);
       }
+
+      // Bind magnific popup for widget settings
+      this.$('.InputfieldWidgetSettings .InputfieldContent a').magnificPopup({
+        type : 'iframe'
+      });
     },
 
     addBreakpoint : function (ev) {
@@ -53,9 +59,14 @@ define(function (require, exports, module) {
       this.model.get('breakpoints').add(new BreakpointModel());
     },
 
+    alertChildren : function () {
+      alert('Please remove embedded (child) widgets first.');
+    },
+
     remove : function (ev) {
       var alertMsg, alerted;
       ev.preventDefault();
+      if (this.model.children().length) return this.alertChildren();
       function then (data) {
         alertMsg = "Something went wrong. Could not delete Widget with the id " + this.model.id + ". \n Please try again.";
         try{

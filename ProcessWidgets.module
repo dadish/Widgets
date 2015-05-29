@@ -12,7 +12,7 @@ class ProcessWidgets extends Process implements Module {
       'version' => 001,       // version number of module
       'summary' => _('Helps to manage widgets.'),      // one sentence summary of module
       'icon' => 'cubes',
-      'requires' => array('Widgets'),
+      'requires' => array('Widgets', 'JqueryMagnific'),
       'autoload' => 'process=ProcessPageEdit|ProcessTemplate',
       'page' => array(
         'parent' => 'setup',
@@ -87,6 +87,13 @@ class ProcessWidgets extends Process implements Module {
     return InputfieldWidgets::renderWidget($this->widgets->get($id));
   }
 
+  public function executeSettings()
+  {
+    $id = (integer) $this->sanitizer->text($this->input->id);
+    $wrapper = $this->widgets->get($id)->getOptionsForm();
+    return $wrapper->render();
+  }
+
   protected function buildWidgetTab($target = null)
   {
     $this->modules->get('InputfieldTextarea');
@@ -144,6 +151,7 @@ class ProcessWidgets extends Process implements Module {
     require_once(__DIR__ . "/Widget.php");
     require_once(__DIR__ . "/WidgetArray.php");
     require_once(__DIR__ . "/PageWidgets.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldWidgetSettings.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidget.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidgets.php");
     require_once(__DIR__ . "/Inputfields/InputfieldBreakpoints.php");

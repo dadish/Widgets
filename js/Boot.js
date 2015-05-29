@@ -9,9 +9,16 @@ requirejs.config({
 	paths : {
 		'requirejs' : 'deps/requirejs/require',
 		'text' : 'deps/requirejs-text/text',
-		'jquery' : 'deps/jquery/dist/jquery.min',
+		'jquery' : '../../../wire/modules/Jquery/JqueryCore/jquery-1.11.1',
 		'underscore' : 'deps/underscore/underscore',
-		'backbone' : 'deps/backbone/backbone'
+		'backbone' : 'deps/backbone/backbone',
+		'magnific-popup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific'
+	},
+	shim : {
+		'magnific-popup' : {
+			deps : ['jquery'],
+			exports : 'magnific-popup'
+		}
 	},
 	waitSeconds : 0
 });
