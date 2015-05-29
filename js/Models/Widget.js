@@ -47,6 +47,12 @@ define(function (require, exports, module) {
       json = Backbone.Model.prototype.toJSON.apply(this, arguments);
       json.breakpoints = json.breakpoints.toJSON();
       return json;
+    },
+
+    children : function () {
+      return wgts.widgets.filter(function (item) {
+        return item.get('parent') === this.get('id');
+      }, this);
     }
 
   });

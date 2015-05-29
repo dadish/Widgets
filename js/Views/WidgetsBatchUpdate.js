@@ -1,7 +1,5 @@
 // js/Views/WidgetsBatchUpdate.js
 
-// TODO Do not update widgets if there is no widgets
-
 define(function (require, exports, module) {
   
   var
