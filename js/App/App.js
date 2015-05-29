@@ -16,14 +16,17 @@ define(function (require, exports, module) {
     events : _.extend({}, Backbone.Events),
   
     launch : function () {
+      var $wrapper;
+
       window.wgts = this;
+      $wrapper = $('#wrap_Inputfield_widgets_1');
 
       wgts.config = Config;
 
       wgts.widgets = new Widgets();
       wgts.containers = [];
 
-      wgts.addContainer($('#wrap_Inputfield_widgets_1')[0]);
+      wgts.addContainer($wrapper[0]);
       
       wgts.batchUpdate = new BatchUpdate({el : $('#wrap_WidgetsBatchUpdate')[0]});
     },

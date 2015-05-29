@@ -92,7 +92,7 @@ class Widgets extends WidgetArray implements Module {
       'renderPages' => $arr['renderPages'],
       'breakpoints' => $arr['breakpoints'],
       'breakpointsString' => $arr['breakpointsString'],
-      'options' => $arr['options'],
+      'settings' => $arr['settings'],
       'class' => $arr['class'],
       'className' => $arr['className']
       );
@@ -201,7 +201,7 @@ class Widgets extends WidgetArray implements Module {
     $data['renderPages'] = $raw['data']['renderPages'];
     $data['breakpoints'] = $raw['data']['breakpoints'];
     $data['class'] = $raw['data']['class'];
-    $data['options'] = $raw['data']['options'];
+    $data['settings'] = $raw['data']['settings'];
   
     $className = $raw['data']['className'];
     $widget = $this->modules->get($className);

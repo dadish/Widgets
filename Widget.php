@@ -11,6 +11,7 @@
  *
  * @todo add a sort method for renderPages
  * @todo add a sort method for childWidgets
+ * @todo look for ProcessModules on how to handle widget settings properly
  */
 
 class Widget extends WireData{
@@ -37,10 +38,10 @@ class Widget extends WireData{
   protected $breakpoints;
 
   /**
-   * Additional options that any widget can accept
+   * Additional settings that any widget can accept
    * 
    */
-  protected $options;
+  protected $settings;
 
 
   public function __construct()
@@ -52,8 +53,8 @@ class Widget extends WireData{
     $this->renderPages->setTrackChanges();
     $this->breakpoints = new BreakpointArray();
     $this->breakpoints->setTrackChanges();
-    $this->options = new WireData();
-    $this->options->setTrackChanges();
+    $this->settings = new WireData();
+    $this->settings->setTrackChanges();
 
     $this->set('id', null);
     $this->set('parent', 1);
@@ -183,7 +184,7 @@ class Widget extends WireData{
       $items = new PageArray();
       $items->add($page);
     }
-    $this->renderPagesCache->import($items);
+    $this->renderPages->import($items);
     return $this;
   }
 
@@ -195,7 +196,7 @@ class Widget extends WireData{
       $items = new PageArray();
       $items->add($page);      
     }
-    foreach ($items as $item) $this->renderPagesCache->remove($item);
+    foreach ($items as $item) $this->renderPages->remove($item);
     return $this;
   }
 
@@ -231,7 +232,7 @@ class Widget extends WireData{
     $data['breakpointsString'] = (string) $this->breakpoints;
     $data['class'] = $this->class;
     $data['className'] = $this->className();
-    $data['options'] = $this->options->getArray();
+    $data['settings'] = $this->settings->getArray();
     return $data;
   }
 
@@ -244,13 +245,13 @@ class Widget extends WireData{
     if (isset($data['renderPages'])) foreach ($this->pages->find("id=" . $data['renderPages']) as $p) $this->addRender($p);
     if (isset($data['class'])) $this->addClass($data['class']);
     if (isset($data['breakpoints'])) $this->breakpoints->populate($data['breakpoints']);
-    if (isset($data['options'])) $this->options->setArray($data['options']);
+    if (isset($data['settings'])) $this->settings->setArray($data['settings']);
     return $this;
   }
 
   public function isChanged($what = '')
   {
-    foreach (array('breakpoints', 'renderPages', 'options') as $subObject) {
+    foreach (array('breakpoints', 'renderPages', 'settings') as $subObject) {
       if ($this->$subObject->isChanged($what)) return true;
     }
     return parent::isChanged($what);
@@ -268,7 +269,7 @@ class Widget extends WireData{
   protected function setTemplateVariables($templateFile)
   {
     $templateFile->set('renderPages', $this->renderPages);
-    $templateFile->set('options', $this->options);
+    $templateFile->set('settings', $this->settings);
     return $templateFile;
   }
 
@@ -288,22 +289,30 @@ class Widget extends WireData{
     return $this->setTemplateVariables(new TemplateFile($file));
   }
 
-  public function getOptionsForm ()
+  public function getSettingsForm ()
   {
     $this->modules->get('JqueryCore');
     $this->modules->get('JqueryUI');
 
-    $form = $this->modules->get('InputfieldForm');
-    $form->attr('id', "widget_form_$this->id");
+    $wrapper = new InputfieldWrapper();
+
     $field = $this->modules->get('InputfieldPageListSelectMultiple');
     $field->name = "renderPages";
-    $form->add($field);
-    return $form;
+    $field->attr('value', (string) $this->renderPages);
+    
+    $wrapper->add($field);
+    return $wrapper;
   }
 
-  public function processOptions(array $options)
+  public function processSettings(InputfieldWrapper $settings)
   {
-    
+    $this->renderPages->removeAll();
+    $renderPages = $settings->get('renderPages')->value;
+    if ($renderPages) {
+      foreach ($renderPages as $id) {
+        $this->addRender($this->pages->get($id));
+      }
+    }
   }
 
   public function __debugInfo()

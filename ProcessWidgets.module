@@ -89,9 +89,42 @@ class ProcessWidgets extends Process implements Module {
 
   public function executeSettings()
   {
+    // Stop ProcessWidgets.js from booting
+    $this->jsSettings['stop'] = true;
+    $this->setJsSettings();
+
     $id = (integer) $this->sanitizer->text($this->input->id);
-    $wrapper = $this->widgets->get($id)->getOptionsForm();
-    return $wrapper->render();
+    $widget = $this->widgets->get($id);
+    $wrapper = $widget->getSettingsForm();
+
+    if ($this->input->post->submit_sidget_settings_save) {
+      $wrapper->processInput($this->input->post);
+      if (!count($wrapper->getErrors())) {
+        $widget->processSettings($wrapper);
+        $widget->save();
+      }
+    }
+
+    $form = new InputfieldForm();
+    $form->attr('action', $this->config->urls->admin . 'setup/widgets/Settings/');
+    $form->attr('method', 'POST');
+    $form->label = $this->_('Settings Form Label');
+
+    // Add a settings fields from widget to form
+    $form->add($wrapper);
+
+    // Add a hidden id field, where the widget id will be
+    $field = $this->modules->get('InputfieldHidden');
+    $field->name = 'id';
+    $field->value = $id;
+    $form->add($field);
+
+    // Add a submit button
+    $submit = $this->modules->get('InputfieldSubmit');
+    $submit->name = 'submit_sidget_settings_save';
+    $submit->attr('value', $this->_('Save'));
+    $form->add($submit);
+    return $form->render();
   }
 
   protected function buildWidgetTab($target = null)

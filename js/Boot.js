@@ -34,8 +34,11 @@ define(function (require, exports, module) {
 	require('backbone');
 
 	var
-		app											=	require('js/App/App')
+		app											=	require('js/App/App'),
+		Config 									=	require('js/Config')
 	;
+
+	if (Config.stop) return;
 
 	app.launch();
 
