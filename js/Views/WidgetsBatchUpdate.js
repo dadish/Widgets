@@ -1,5 +1,7 @@
 // js/Views/WidgetsBatchUpdate.js
 
+// TODO Do not update widgets if there is no widgets
+
 define(function (require, exports, module) {
   
   var
@@ -21,8 +23,7 @@ define(function (require, exports, module) {
       this.listenTo(wgts.events, 'widget:updated', this.updated);
     },
 
-    update : function (ev) {
-      ev.preventDefault();
+    update : function () {
       if (this._status !== status.end) return;
       this.fixButtonSize();
       this._status = status.progress;
@@ -37,23 +38,20 @@ define(function (require, exports, module) {
       wgts.config.batchUpdate = true;
 
       // Send all widgets to update
-      wgts.widgets.each(function (widget) {
-        wgts.events.trigger('widget:update', widget);
-      }, this);
+      wgts.events.trigger('widgets:update');
     },
 
     updated : function (widget, updated) {
       var all;
       if (this._status !== status.progress) return;
       this._updates[widget.id] = true;
-      if (updated) this.addNotification(widget.id);
       all = _(this._updates).every(function (value) { return value; });
       if (all) {
         this.$button.empty().append(this.$text);
         this.$button.removeClass('ui-state-active').addClass('ui-state-default');
         this._status = status.end;
         Notifications.render();
-        wgts.batchUpdate = false;
+        wgts.config.batchUpdate = false;
       }
     }
 

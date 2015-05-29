@@ -11,6 +11,10 @@
   font-size: 0.85em;
 }
 
+.InputfieldWidgetHeader .fa-spin.fa-spinner {
+  margin-left: 1rem;
+}
+
 .InputfieldWidgetsItem{
   margin-bottom : 1rem;
 }

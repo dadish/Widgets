@@ -32,6 +32,7 @@ define(function (require, exports, module) {
     },
 
     attachEvents : function () {
+      this.listenTo(wgts.events, 'widgets:update', this.clickEvent);
       this.listenTo(wgts.events, 'widget:updated', this.updated);
       this.listenTo(wgts.events, 'widget:updated', this.notify);
     },
@@ -45,6 +46,9 @@ define(function (require, exports, module) {
       this.triggerUpdate();
     },
 
+    clickEvent : function () {
+      this.$button.trigger('click');
+    },
 
     triggerUpdate : function () {
       wgts.events.trigger('widget:update', this.model);
@@ -76,15 +80,13 @@ define(function (require, exports, module) {
 
     notify : function (model, updated) {
       if (model.id !== this.model.id) return;
-      if (wgts.batchUpdate) return;
       if (!updated) return;
       this.addNotification(this.model.id);
-      Notifications.render();
+      if (!wgts.config.batchUpdate) Notifications.render();
     },
 
     updated : function (model, updated) {
       if (this.model.id !== model.id) return;
-      if (wgts.batchUpdate) return;
       if (this._status !== status.progress) return;
       if (!updated) {
         return setTimeout(_.bind(function () {

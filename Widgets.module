@@ -61,6 +61,11 @@ class Widgets extends WidgetArray implements Module {
   public function init() {
     $this->addHookProperty('Page::widgets', $this, 'pageWidgets');
     $this->addHookProperty('Template::widgets', $this, 'templateWidgets');
+
+    // Initiate default parent widget
+    $parent = $this->makeBlankItem();
+    $parent->id = 1;
+    $this->add($parent);
   }
 
   protected function pageWidgets(HookEvent $event)

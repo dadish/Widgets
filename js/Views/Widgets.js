@@ -1,5 +1,7 @@
 // js/Views/Widgets.js
 
+// TODO implement a widget sorting functionality
+
 define(function (require, exports, module) {
   
   var
@@ -15,8 +17,10 @@ define(function (require, exports, module) {
     },
 
     initialize : function (options) {
+
       // The widgets
-      this.$widgets = this.$('.Inputfields.InputfieldsWidgets');
+      this._id = parseInt(this.$el.attr('id').replace('wrap_Inputfield_widgets_', ''), 10);
+      this.$widgets = this.$('.Inputfields.InputfieldsWidgets_' + this._id);
       this._widgets = _(this.$widgets.children('.InputfieldWidget')).map(this.initializeWidget, this);
       this.attachEvents();
     },
@@ -30,9 +34,15 @@ define(function (require, exports, module) {
 
     attachEvents : function () {
       this.listenTo(wgts.events, 'remove:widget', this.removeWidget);
+      this.listenTo(wgts.events, 'widget:changeType', this.changeWidgetType);
     },
 
     addWidget : function (ev) {
+
+      var $target;
+      $target = $(ev.target);
+      id = '#InputfieldWidgetsAddLink_' + this._id;
+      if (!$target.is(id) && !$target.parents(id).length) return;
       ev.preventDefault();
 
       function then (data) {
@@ -45,7 +55,40 @@ define(function (require, exports, module) {
 
       $.get(wgts.config.ajaxUrl + 'Create/', {
         owner : wgts.config.owner,
-        ownerType : wgts.config.ownerType
+        ownerType : wgts.config.ownerType,
+        parent : this._id
+      }, _.bind(then, this));
+    },
+
+    changeWidgetType : function (widget) {
+      var index, $widget;
+      index = _(this._widgets).findIndex(function (item) {
+        return item.cid === widget.cid && item.model.id === widget.model.id;
+      });
+      if (index === -1) return;
+
+      function then (data) {
+        // our new widget
+        $widget = $(data);
+
+        // Insert it right after old
+        $widget.insertAfter(widget.$el);
+
+        // Remove the old one
+        Backbone.View.prototype.remove.apply(widget);
+
+        // Remove the model of the old widget
+        wgts.widgets.remove(widget.model);
+
+        // Remove the widget view from _widgets cache
+        this._widgets.splice(index, 1);
+
+        // Initialize the new widget and append it to _widgets cache
+        this._widgets.push(this.initializeWidget($widget[0]));
+      }
+
+      $.post(wgts.config.ajaxUrl + 'ChangeType/', {
+        widget : JSON.stringify(widget.model.toJSON())
       }, _.bind(then, this));
     },
 

@@ -34,7 +34,7 @@ class ProcessWidgets extends Process implements Module {
     $this->jsSettings['notify'] = ($this->modules->has('SystemNotifications')) ? true : false;
   }
 
-  public function setJsSettings()
+  protected function setJsSettings()
   {
     $this->config->js($this->className(), $this->jsSettings);
   }
@@ -48,10 +48,12 @@ class ProcessWidgets extends Process implements Module {
   {
     $owner = (integer) $this->sanitizer->text($this->input->owner);
     $ownerType = (integer) $this->sanitizer->text($this->input->ownerType);
+    $parent = (integer) $this->sanitizer->text($this->input->parent);
     
     $widget = $this->modules->get('WidgetHeading');
     $widget->owner = $owner;
     $widget->ownerType = $ownerType;
+    if ($parent) $widget->parent = $parent;
     $widget->save();
 
     return InputfieldWidgets::renderWidget($widget);
@@ -74,6 +76,17 @@ class ProcessWidgets extends Process implements Module {
     return json_encode($widget->getArray());
   }
 
+  public function executeChangeType()
+  {
+    $arr = json_decode($this->sanitizer->textarea($this->input->widget), true);
+    $id = $arr['id'];
+    $className = $arr['className'];
+    $widget = $this->modules->get($className);
+    $widget->setArray($arr);
+    $widget->save();
+    return InputfieldWidgets::renderWidget($this->widgets->get($id));
+  }
+
   protected function buildWidgetTab($target = null)
   {
     $this->modules->get('InputfieldTextarea');
@@ -84,8 +97,7 @@ class ProcessWidgets extends Process implements Module {
     $wrapper->attr('title', $title); 
 
     $widgetsField = new InputfieldWidgets();
-    $widgetsField->name = "widgets";
-    $widgetsField->label = "Widgets";
+    $widgetsField->setWidget($this->widgets->get(1));
 
     if ($target instanceof Page || $target instanceof Template) {
       $widgets = $target->widgets;

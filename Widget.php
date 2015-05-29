@@ -124,11 +124,6 @@ class Widget extends WireData{
 
       case 'parent':
         $parentId = $this->get($key);
-        if ($parentId === 1) {
-          $parent = new Widget();
-          $parent->id = 1;
-          return $parent;
-        }
         return $this->widgets->get($parentId);
         break;
       
@@ -159,7 +154,7 @@ class Widget extends WireData{
   {
     $class = (string) $class;
     $classes = explode(' ', $this->class);
-    if (strpos($class, ' ') !== false) $class = split(' ', $class);
+    if (strpos($class, ' ') !== false) $class = explode(' ', $class);
     else $class = (array) $class;
     foreach ($class as $c) {
       if (!in_array($c, $classes)) $classes[] = $c;
@@ -170,8 +165,8 @@ class Widget extends WireData{
   public function removeClass($class)
   {
     $class = (string) $class;
-    $classes = split(' ', $this->class);
-    if (strpos($class, ' ') !== false) $class = split(' ', $class);
+    $classes = explode(' ', $this->class);
+    if (strpos($class, ' ') !== false) $class = explode(' ', $class);
     else $class = (array) $class;
     foreach ($class as $c) {
       $index = array_search($c, $classes);
@@ -320,7 +315,7 @@ class Widget extends WireData{
 
   public function __toString()
   {
-    if (!$this->isNew()) $this->id;
+    if (!$this->isNew()) return (string) $this->id;
     return parent::__toString();
   }
 }

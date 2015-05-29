@@ -21,13 +21,15 @@ define(function (require, exports, module) {
       wgts.config = Config;
 
       wgts.widgets = new Widgets();
-      wgts.views = [];
+      wgts.containers = [];
 
-      $('.InputfieldWidgets').each(function () {
-        wgts.views.push(new View({el : this}));
-      });
-
+      wgts.addContainer($('#wrap_Inputfield_widgets_1')[0]);
+      
       wgts.batchUpdate = new BatchUpdate({el : $('#wrap_WidgetsBatchUpdate')[0]});
+    },
+
+    addContainer : function (el) {
+      wgts.containers.push(new View({el : el}));
     }
 
   };

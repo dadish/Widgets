@@ -12,8 +12,6 @@ class InputfieldBreakpoints extends InputfieldTextarea {
   }
 
   public function ___render() {
-    $this->attr('id', $this->className() . "_" . $this->widget->id);
-
     $out = "";
     $table = $this->modules->get('MarkupAdminDataTable');
     $table->setEncodeEntities(false);
@@ -60,6 +58,7 @@ class InputfieldBreakpoints extends InputfieldTextarea {
   public function setWidget(Widget $widget)
   {
     $this->widget = $widget;
+    $this->attr('id', $this->className() . "_" . $this->widget->id);
     return $this;
   }
 }

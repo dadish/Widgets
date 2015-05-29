@@ -1,5 +1,8 @@
 // js/Views/Widget.js
 
+// TODO Dp not delete widget if it has child wigets
+// Tell user to delete child widgets first
+
 define(function (require, exports, module) {
   
   var
@@ -13,16 +16,17 @@ define(function (require, exports, module) {
   module.exports = Backbone.View.extend({
 
     events : {
-      'click .InputfieldWidgetDelete' : 'remove'
+      'click .InputfieldWidgetDelete' : 'remove',
+      'change [name="InputfieldType"]' : 'changeType'
     },
 
     initialize : function (options) {
-      var id, jsonString;
+      var id, jsonString, subContainer;
       this.$('.InputfieldHeader').addClass('InputfieldStateToggle');
       this.model = new Model();
 
       id = this.$el.attr('data-id');
-      jsonString = this.$('#InputfieldWidget_' + id).val();
+      jsonString = this.$('#Inputfield_' + id).val();
       this.model.parseWidget(jsonString);
       this.breakpoints = new Breakpoints({
         collection : this.model.get('breakpoints'),
@@ -33,6 +37,15 @@ define(function (require, exports, module) {
         el : this.$('#wrap_InputfieldUpdate_' + this.model.id),
         model : this.model
       });
+
+      this.$spinner = $('<i class="fa fa-lg fa-spin fa-spinner"></i>');
+
+      // If we have a li.InputfieldWidgets element then initiate it as a Widgets
+      // View and add it to wgts.containers.
+      subContainer = this.$('.InputfieldWidgets');
+      if (subContainer.length) {
+        wgts.addContainer(subContainer[0]);
+      }
     },
 
     addBreakpoint : function (ev) {
@@ -62,6 +75,23 @@ define(function (require, exports, module) {
         widgetId : this.model.id
       }, _.bind(then, this));
       return false;
+    },
+
+    changeType : function (ev) {
+      var $target;
+      $target = $(ev.target);
+      if (!$target.is('#InputfieldType_' + this.model.id)) return;
+      this.model.set('className', $(ev.target).val());
+      wgts.events.trigger('widget:changeType', this);
+      this.startSpinning();
+    },
+
+    startSpinning : function () {
+      this.$('.InputfieldWidgetHeader').append(this.$spinner);
+    },
+
+    stopSpinning : function () {
+      this.$spinner.remove();
     }
   });
 
