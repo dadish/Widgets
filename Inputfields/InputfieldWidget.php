@@ -13,13 +13,18 @@ class InputfieldWidget extends InputfieldTextarea {
   public function ___render() {
     $wrap = new InputfieldWrapper();
 
+    // Determine if this widget is going to be a container
+    // If WidgetContainer is installed and
+    // If the widget is a container then it is a container
+    $container = $this->modules->has('WidgetContainer') && $this->widget->className() == 'WidgetContainer';
+
     // WidgetType
     $field = $this->modules->get('InputfieldSelect');
     $field->name = 'InputfieldType';
     $field->label = $this->_('Widget Type');
     $field->attr('id', 'InputfieldType_' . $this->widget->id);
     $field->required = true;
-    $field->columnWidth = 50;
+    if (!$container) $field->columnWidth = 50;
     $widgetTypes = array();
     foreach ($this->modules->findByPrefix('Widget') as $module) {
       $title = $module::getModuleInfo()['title'];
@@ -31,21 +36,22 @@ class InputfieldWidget extends InputfieldTextarea {
     $wrap->add($field);
 
     // Settings button
-    $field = new InputfieldWidgetSettings();
-    $field->setWidget($this->widget);
-    $field->name = 'InputfieldSettings';
-    $field->label = $this->_('Settings');
-    $field->columnWidth = 50;
-    $wrap->add($field);
+    if (!$container) {
+      $field = new InputfieldWidgetSettings();
+      $field->setWidget($this->widget);
+      $field->name = 'InputfieldSettings';
+      $field->label = $this->_('Settings');
+      $field->columnWidth = 50;
+      $wrap->add($field);
+    }
 
     // Prepare breakpoints
     $breakpoints = new InputfieldBreakpoints($this->widget);
     $breakpoints->setWidget($this->widget);
     $wrap->add($breakpoints);
 
-    // If WidgetContainer is installed and
-    // If the widget is a container then add a widgets container
-    if ($this->modules->has('WidgetContainer') && $this->widget->className() == 'WidgetContainer') {
+    // Add widgets container if it is a container
+    if ($container) {
       $container = new InputfieldWidgets();
       $container->setWidget($this->widget);
       foreach ($this->widget->children() as $childWidget) $container->add($childWidget);

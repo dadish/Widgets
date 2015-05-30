@@ -28,6 +28,8 @@ class Widgets extends WidgetArray implements Module {
    */
   protected $database;
 
+  public $prefix = '';
+
   /**
    * getModuleInfo is a module required by all modules to tell ProcessWire about them
    *
@@ -66,6 +68,9 @@ class Widgets extends WidgetArray implements Module {
     $parent = $this->makeBlankItem();
     $parent->id = 1;
     $this->add($parent);
+
+    // The widget id prefix
+    $this->prefix = 'wgts';
   }
 
   protected function pageWidgets(HookEvent $event)
@@ -234,21 +239,14 @@ class Widgets extends WidgetArray implements Module {
 
   protected function jsAssets()
   {
-    $jsConfig = array(
-      'toolbarUrl' => $this->config->urls->admin . 'setup/widgets/?modal=1'
-      );
-    $scripts = "<script>var WidgetsConfig = JSON.parse('". json_encode($jsConfig) ."');</script>";
-    if ($this->config->debug) {
-      $scripts .= "<script data-main='". $this->config->urls->Widgets ."/js/Boot' src='" . $this->config->urls->Widgets . "/deps/requirejs/require.js'></script>";
-    } else {
-      $scripts .= "<script src'". $this->config->urls->Widgets ."build/widgets.js'></script>";
-    }
-    return $scripts;
+    return '';
   }
 
   protected function cssAssets()
   {
-    return "<link rel='stylesheet' type='text/css' href='". $this->config->urls->Widgets ."css/widgets.css' />";
+    $css = new TemplateFile($this->config->paths->Widgets . '/widgets.css');
+    $css->set('prefix', $this->prefix);
+    return $css->render();
   }
 
   /**

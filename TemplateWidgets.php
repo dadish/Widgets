@@ -20,10 +20,22 @@ class TemplateWidgets extends WidgetArray {
 
   public function render()
   {
+    $html = "";
     foreach ($this as $widget) {
       $html .= $widget->render();
     }
     return $html;
+  }
+
+  public function assets()
+  {
+    $out = ""; 
+    $out .= $this->widgets->assets();
+    foreach ($this as $widget) {
+      $out .= $widget->css();
+      $out .= $widget->breakpoints;
+    }
+    return $out;
   }
 
 }

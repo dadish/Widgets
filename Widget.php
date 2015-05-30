@@ -35,7 +35,7 @@ class Widget extends WireData{
    * Widget breakpoints.
    * 
    */
-  protected $breakpoints;
+  public $breakpoints;
 
   /**
    * Additional settings that any widget can accept
@@ -52,6 +52,7 @@ class Widget extends WireData{
     $this->renderPages = new PageArray();
     $this->renderPages->setTrackChanges();
     $this->breakpoints = new BreakpointArray();
+    $this->breakpoints->setWidget($this);
     $this->breakpoints->setTrackChanges();
     $this->settings = new WireData();
     $this->settings->setTrackChanges();
@@ -60,7 +61,7 @@ class Widget extends WireData{
     $this->set('parent', 1);
     $this->set('owner', null);
     $this->set('ownerType', self::ownerTypeTemplate);
-    $this->set('class', $this->className);
+    $this->set('class', $this->className());
     $this->setTrackChanges();
   }
 
@@ -202,7 +203,11 @@ class Widget extends WireData{
 
   public function render()
   {
-    $html = "<div class='$this->class' id='$this->id'>";
+
+    $prefix = $this->widgets->prefix;
+    $this->addClass($prefix);
+    $this->addClass($prefix . $this->id);
+    $html = "<div class='$this->class'>";
     if ($this->children()->count()) {
       foreach ($this->children() as $child) {
         $html .= $child->render();
@@ -298,6 +303,8 @@ class Widget extends WireData{
 
     $field = $this->modules->get('InputfieldPageListSelectMultiple');
     $field->name = "renderPages";
+    $field->label = $this->_('Render Pages');
+    $field->description = $this->_('Fields that will be rendered by this widget.');
     $field->attr('value', (string) $this->renderPages);
     
     $wrapper->add($field);

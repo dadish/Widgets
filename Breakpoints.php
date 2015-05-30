@@ -21,10 +21,21 @@ class Breakpoint extends WireData {
     $this->setTrackChanges();
   }
 
+  public function getString($id, $prefix)
+  {
+    $out = "";
+    $width = $this->span[0] / $this->span[1] * 100;
+    if ($this->media !== 'default') $out .= "@media(max-width:". $this->media ."px){";
+    $out .= ".". $prefix . $id ."{width:". $width ."%;clear:". $this->clear ."}";
+    if ($this->media !== 'default') $out .= "}";
+    return $out;
+  }
+
 }
 
-
 class BreakpointArray extends WireArray {
+
+  protected $widget = null;
 
   public function __construct()
   {
@@ -63,19 +74,30 @@ class BreakpointArray extends WireArray {
     return new Breakpoint();
   }
 
-  public function __toString() {
-    $arr = array();
-    foreach ($this as $item) {
-      $arr[] = $item->className();
-    }
-    return implode('|', $arr);
-  }
-
   public function getArray()
   {
     $arr = array();
     foreach ($this as $breakpoint) $arr[] = $breakpoint->getArray();
     return $arr;
+  }
+
+  public function setWidget(Widget $widget)
+  {
+    $this->widget = $widget;
+    return $this;
+  }
+
+  protected function getString()
+  {
+    $out = "";
+    $prefix = $this->modules->get('Widgets')->prefix;
+    foreach ($this as $brk) $out .= $brk->getString($this->widget->id, $prefix);
+    return $out;
+  }
+
+  public function __toString() {
+    if (is_null($this->widget) || $this->widget->isNew()) return $this->className();
+    return $this->getString();
   }
 
 }
