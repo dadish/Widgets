@@ -1,7 +1,18 @@
 .<?= $prefix ?>{
-  display: inline-block; 
-  padding:0.5rem;
+  display: block; 
+  float : left;
+  width : 100%;
+  padding : 0.5rem;
+}
+
+.<?= $prefix ?>, .<?= $prefix ?> *{
   -moz-box-sizing:border-box;
   -webkit-box-sizing:border-box;
   box-sizing:border-box
+}
+
+.<?= $prefix ?>-inner{
+  display: block; 
+  width: 100%;
+  padding : 0.5rem;
 }

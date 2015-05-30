@@ -208,6 +208,7 @@ class Widget extends WireData{
     $this->addClass($prefix);
     $this->addClass($prefix . $this->id);
     $html = "<div class='$this->class'>";
+    $html .= "<div class='inner wgts-inner'>";
     if ($this->children()->count()) {
       foreach ($this->children() as $child) {
         $html .= $child->render();
@@ -215,7 +216,7 @@ class Widget extends WireData{
     } else {
       $html .= $this->getTemplateFile()->render();
     }
-    $html .= "</div>";
+    $html .= "</div></div>";
     return $html;
   }
 
