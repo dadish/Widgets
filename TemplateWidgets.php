@@ -26,21 +26,47 @@ class TemplateWidgets extends WidgetArray {
   public function render()
   {
     $html = "";
-    foreach ($this as $widget) {
+    foreach ($this->find("parent=1") as $widget) {
       $html .= $widget->render();
     }
     return $html;
   }
 
-  public function assets()
+  public function assets($type = 'css')
   {
-    $out = ""; 
+    if (!in_array($type, array('css', 'js'))) return '';
+    $method = $type . 'Assets';
+    return $this->$method();
+  }
+
+  protected function cssAssets()
+  {
+    $out = "";
+    $widgetCss = array();
     $out .= $this->widgets->assets();
+
     foreach ($this as $widget) {
-      $out .= $widget->css();
+      if (!in_array($widget->className(), $widgetCss)) {
+        $out .= $widget->css();
+        $widgetCss[] = $widget->className();
+      }
+    }
+
+    foreach ($this as $widget) {
       $out .= $widget->breakpoints();
     }
+    if ($this->config->debug) return $this->minify($out);
     return $out;
+  }
+
+  protected function jsAssets()
+  {
+    return '';
+  }
+
+  static public function minify($string = '')
+  {
+    return $string;
   }
 
 }
