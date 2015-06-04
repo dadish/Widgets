@@ -1,5 +1,5 @@
 .<?= $prefix ?>{
-  display: block; 
+  display: inline-block; 
   float : left;
   width : 100%;
   padding : 0.5rem;
@@ -12,7 +12,6 @@
 }
 
 .<?= $prefix ?>-inner{
-  display: block; 
+  display: inline-block;
   width: 100%;
-  padding : 0.5rem;
 }
