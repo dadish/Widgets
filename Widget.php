@@ -125,6 +125,10 @@ class Widget extends WireData{
         $parentId = $this->get($key);
         return $this->widgets->get($parentId);
         break;
+
+      case 'class':
+        return trim($this->get($key));
+        break;
       
       default:
         return parent::__get($key);
@@ -134,7 +138,7 @@ class Widget extends WireData{
 
   public function children()
   {
-    return $this->widgets->find("parent=$this");
+    return $this->widgets->find("parent=$this, sort=sort");
   }
 
   public function breakpoints()
@@ -193,13 +197,14 @@ class Widget extends WireData{
 
   public function render()
   {
-
     $prefix = $this->widgets->prefix;
-    $classes = $this->className() . ' ' . $this->class;
+    $className = $this->className();
+    $classNameInner = $className . 'Inner';
+    $this->addClass($className);
     $this->addClass($prefix);
     $this->addClass($prefix . $this->id);
-    $html = "<div class='$classes'>";
-    $html .= "<div class='inner wgts-inner'>";
+    $html = "<div class='$this->class'>";
+    $html .= "<div class='$classNameInner wgts-inner'>";
     if ($this->children()->count()) {
       foreach ($this->children() as $child) {
         $html .= $child->render();
@@ -214,7 +219,9 @@ class Widget extends WireData{
   public function css()
   {
     $className = $this->className();
-    return wireRenderFile($this->config->paths->$className . "$className.css");
+    $css = new TemplateFile($this->config->paths->$className . "$className.css");
+    $css->set('prefix', $this->widgets->prefix);
+    return $css->render();
   }
 
   public function getArray()
@@ -308,6 +315,7 @@ class Widget extends WireData{
   {
     $templateFile->set('renderPages', $this->renderPages);
     $templateFile->set('settings', $this->settings);
+    $templateFile->set('widget', $this);
     return $templateFile;
   }
 
