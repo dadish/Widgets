@@ -12,23 +12,34 @@ define(function (reqiure, exports, module) {
     model : Model,
 
     initialize : function () {
-      this.listenTo(wgts.events, 'widget:update', this.updateIfChanged);
+      this.listenTo(wgts.events, 'widgets:update', this.updateWidgets);
     },
 
-    updateIfChanged : function (widget) {
-      var widgetJSON;
-      widgetJSON = widget.toJSON();
+    updateWidgets : function (widget) {
+      var widgets;
+      widgets = [];
 
-      if (!widget.isChanged()) return wgts.events.trigger('widget:updated', widget, false);
+      this.each(function (widget) {
+       if (widget.isChanged()) widgets.push(widget.toJSON());
+      });
 
       function then (string) {
-        widget.parseWidget(string);
-        wgts.events.trigger('widget:updated', widget, true);
+        this.parseWidgets(string);
+        wgts.events.trigger('widgets:updated', widget);
       }
 
       $.post(wgts.config.ajaxUrl + 'Update/', {
-        widget : JSON.stringify(widgetJSON)
+        widgets : JSON.stringify(widgets)
       }, _.bind(then, this));
+    },
+
+    parseWidgets : function (string) {
+      var json, widget;
+      json = JSON.parse(string);
+      _(json).each(function (item) {
+        widget = this.get(item.id);
+        if (widget) widget.parseWidget(JSON.stringify(item));
+      }, this);
     }
 
   });

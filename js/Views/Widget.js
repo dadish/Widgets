@@ -7,7 +7,6 @@ define(function (require, exports, module) {
   
   var
     Backbone                      = require('backbone'),
-    WidgetUpdate                  = require('js/Views/WidgetUpdate'),
     Breakpoints                   = require('js/Views/Breakpoints'),
     BreakpointModel               = require('js/Models/Breakpoint'),
     Model                         = require('js/Models/Widget'),
@@ -33,11 +32,6 @@ define(function (require, exports, module) {
         model : this.model,
         collection : this.model.get('breakpoints'),
         el : this.$('.InputfieldContent .Inputfields .InputfieldBreakpoints')[0]
-      });
-
-      this.$update = new WidgetUpdate({
-        el : this.$('#wrap_InputfieldUpdate_' + this.model.id),
-        model : this.model
       });
 
       this.$spinner = $('<i class="fa fa-lg fa-spin fa-spinner"></i>');

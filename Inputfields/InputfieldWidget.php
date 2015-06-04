@@ -56,11 +56,11 @@ class InputfieldWidget extends InputfieldTextarea {
       $wrap->add($container);
     }
 
-    // UpdateButton
-    $button = $this->modules->get('InputfieldButton');
-    $button->attr('id', 'InputfieldUpdate_' . $this->widget->id);
-    $button->attr('value', $this->_('Update'));   
-    $wrap->add($button);
+//    // UpdateButton
+//    $button = $this->modules->get('InputfieldButton');
+//    $button->attr('id', 'InputfieldUpdate_' . $this->widget->id);
+//    $button->attr('value', $this->_('Update'));   
+//    $wrap->add($button);
 
     return parent::___render() . $wrap->render();
   }

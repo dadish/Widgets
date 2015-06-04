@@ -7,7 +7,7 @@ define(function (require, exports, module) {
     Widgets                       = require('js/Collections/Widgets'),
     View                          = require('js/Views/Widgets'),
     Config                        = require('js/Config'),
-    BatchUpdate                   = require('js/Views/WidgetsBatchUpdate'),
+    BatchUpdate                   = require('js/Views/WidgetsUpdate'),
     _                             = require('underscore')
   ;
 

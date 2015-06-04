@@ -80,24 +80,36 @@ class ProcessWidgets extends Process implements Module {
 
   public function executeUpdate()
   {
-    $arr = json_decode($this->sanitizer->textarea($this->input->widget), true);
-    $id = $arr['id'];
-    $breakpoints = $arr['breakpoints'];
-    $saved = array();
-    foreach ($breakpoints as $brkArr) {
-      $brk = $this->breakpoints->get($brkArr['id']);
-      $brk->setArray($brkArr);
-      $saved[] = $brk->save();
+    $updatedWidgets = array();
+    $widgets = json_decode($this->sanitizer->textarea($this->input->widgets), true);
+    foreach ($widgets as $arr) {
+      $id = $arr['id'];
+      $widget = $this->widgets->get($id);
+      $widget->setArray($arr);
+      $breakpoints = $arr['breakpoints'];
+      $saved = array();
+      foreach ($breakpoints as $brkArr) {
+        $brk = $this->breakpoints->get($brkArr['id']);
+        $brk->setArray($brkArr);
+        $saved[] = $brk->save();
+      }      
+
+      $updatedWidgets[$widget->id] = $widget->save() && !in_array(false, $saved);
     }
 
-    if (in_array(false, $saved)) {
-      return json_encode(array(
-        'error' => true,
-        'message' => 'Not all breakpoints are saved!'
-      ));
+    foreach ($updatedWidgets as $key => $updated) {
+      if (!$updated) {
+        return json_encode(array(
+          'error' => true,
+          'message' => "Couldn't update the widget $key."
+        ));
+      }
     }
 
-    return json_encode($this->widgets->get($brk->widget)->getArrayWithBreakpoints());
+    $out = new WidgetArray();
+    foreach ($updatedWidgets as $key => $update) $out->add($this->widgets->get($key));
+
+    return json_encode($out->getArray());
   }
 
   public function executeChangeType()
