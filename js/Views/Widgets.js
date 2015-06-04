@@ -35,6 +35,16 @@ define(function (require, exports, module) {
     attachEvents : function () {
       this.listenTo(wgts.events, 'remove:widget', this.removeWidget);
       this.listenTo(wgts.events, 'widget:changeType', this.changeWidgetType);
+      
+      // Init sortable
+      this.$widgets.sortable({
+        handle : ".InputfieldWidgetDragZone",
+        axis : 'y',
+        cursor : 'move',
+        distance: 8,
+        opacity : 0.65,
+        update : _.bind(this.onSortUpdate, this)
+      });
     },
 
     addWidget : function (ev) {
@@ -100,6 +110,13 @@ define(function (require, exports, module) {
       if (index === -1) return;
       this._widgets.splice(index, 1);
       wgts.widgets.remove(widget.model);
+    },
+
+    onSortUpdate : function (ev, ui) {
+      var id;
+      _(this.$widgets.children()).each(function(el, index) {
+        wgts.widgets.get(parseInt($(el).attr('data-id'), 10)).set('sort', index + 1);
+      });
     }
 
   });

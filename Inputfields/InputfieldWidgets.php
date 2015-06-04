@@ -43,7 +43,7 @@ class InputfieldWidgets extends Inputfield implements InputfieldItemList{
   {
     $InputfieldWidget = new InputfieldWidget($widget);
     $out = "<li class='Inputfield InputfieldWidget InputfieldWidgetsItem' data-id='$widget->id'>";
-    $out .= "<label class='InputfieldHeader InputfieldWidgetHeader InputfieldStateToggle' for='id: $widget->id'>";
+    $out .= "<label class='InputfieldHeader InputfieldWidgetHeader InputfieldStateToggle' for=''>";
     $out .= $InputfieldWidget->label;
     $out .= "<i class='toggle-icon fa fa-angle-down' data-to='fa-angle-down fa-angle-right' style='color: rgb(20, 144, 184);'></i>";
     $out .= wireIconMarkup('trash', 'InputfieldWidgetDelete');

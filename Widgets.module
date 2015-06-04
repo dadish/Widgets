@@ -5,12 +5,6 @@
  * Widgets - A ProcessWire module.
  * Helps to build responsive websites with ease.
  * 
- * @todo implement a remove method!
- * @todo widgets module api should derive from $page->widgets
- * @todo implement an `assets(string)` method that returns the necessary js and css for editing widgets at the front end
- * @todo implement a `new()` method that returns a new widget with owner assigned. Consider all three types of owners
- * @todo implement a `css()` method that returns a css string for all involved widgets
- * @todo implement a `cssMin()` method that returns a minified css string of the `css()` method
  * @todo implement widget sorting capabilities
  */
 
@@ -42,7 +36,8 @@ class Widgets extends WidgetArray implements Module {
       'version' => 001, 
       'summary' => __('Helps to build responsive websites with ease.'),
       'singular' => true, 
-      'autoload' => true, 
+      'autoload' => true,
+      'requires' => array('Breakpoints'),
       'icon' => 'cubes', 
       );
   }
@@ -67,6 +62,7 @@ class Widgets extends WidgetArray implements Module {
     // Initiate default parent widget
     $parent = $this->makeBlankItem();
     $parent->id = 1;
+    $parent->resetTrackChanges();
     $this->add($parent);
 
     // The widget id prefix
@@ -89,37 +85,41 @@ class Widgets extends WidgetArray implements Module {
 
   public function save(Widget $widget)
   {
-    $widget->reportIfErrors();
     if (!$widget->isChanged()) return $widget;
     $table = self::dbTableName;
     $arr = $widget->getArray();
-    $data = array(
-      'renderPages' => $arr['renderPages'],
-      'breakpoints' => $arr['breakpoints'],
-      'breakpointsString' => $arr['breakpointsString'],
-      'settings' => $arr['settings'],
-      'class' => $arr['class'],
-      'className' => $arr['className']
-      );
+
     $params = array(
       ':owner' => $arr['owner'],
       ':ownerType' => $arr['ownerType'],
       ':parent' => $arr['parent'],
-      ':data' => json_encode($data),
+      ':data' => json_encode($arr['data'])
       );
     if ($widget->isNew()) {
-      $sql = "INSERT INTO $table (owner, ownerType, parent, data) VALUES(:owner, :ownerType, :parent, :data)";  
+      $sql = "INSERT INTO $table (owner, ownerType, parent, data, sort) VALUES(:owner, :ownerType, :parent, :data, :sort)";
+
+      // Get the count for all widgets with the particular parent
+      // This way we get the sort for new widget
+      $stmt = $this->database->prepare("SELECT COUNT(*) FROM $table WHERE parent = :parent");
+      $stmt->execute(array(':parent' => $arr['parent']));
+      $params[':sort'] = $stmt->fetch(PDO::FETCH_ASSOC)['COUNT(*)'];
     } else {
-      $sql = "UPDATE $table SET owner = :owner, ownerType = :ownerType, parent = :parent, data = :data WHERE id = :id";
-      $params['id'] = $widget->id;
+      $sql = "UPDATE $table SET owner = :owner, ownerType = :ownerType, parent = :parent, data = :data, sort = :sort WHERE id = :id";
+      $params[':sort'] = $arr['sort'];
+      $params[':id'] = $arr['id'];
     }
     $stmt = $this->database->prepare($sql);
     $stmt->execute($params);
     $id = $this->database->lastInsertId();
-    $widget->set('id', $id);
+    if ($widget->isNew()) $widget->set('id', $id);
     if (!$this->has($widget)) $this->add($widget);
     $widget->resetTrackChanges();
     return $widget;
+  }
+
+  public function sort($ids)
+  {
+    $table = self::dbTableName;
   }
 
   public function delete($key)
@@ -198,21 +198,11 @@ class Widgets extends WidgetArray implements Module {
   protected function dataToWidget($raw)
   {
     $raw['data'] = json_decode($raw['data'], true);
-    $data = array();
-    $data['id'] = $raw['id'];
-    $data['owner'] = $raw['owner'];
-    $data['ownerType'] = $raw['ownerType'];
-    $data['parent'] = $raw['parent'];
-    $data['renderPages'] = $raw['data']['renderPages'];
-    $data['breakpoints'] = $raw['data']['breakpoints'];
-    $data['class'] = $raw['data']['class'];
-    $data['settings'] = $raw['data']['settings'];
-  
     $className = $raw['data']['className'];
     $widget = $this->modules->get($className);
-    $widget->setArray($data);
-    $widget->resetTrackChanges();
+    $widget->setArray($raw);
     if (!$this->has($widget)) $this->append($widget);
+    $widget->resetTrackChanges();
     return $widget;
   }
 
@@ -263,10 +253,12 @@ class Widgets extends WidgetArray implements Module {
       ownerType INT(1) NOT NULL,
       parent INT UNSIGNED NOT NULL DEFAULT 1,
       data TEXT,
+      sort INT(3),
       PRIMARY KEY (id), 
       INDEX (owner), 
       INDEX (ownerType), 
-      INDEX (parent)
+      INDEX (parent),
+      INDEX (sort)
       ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8";
 
     $this->database->query($sql); 
@@ -278,13 +270,5 @@ class Widgets extends WidgetArray implements Module {
    */
   public function ___uninstall() {
     $this->database->query("DROP TABLE " . self::dbTableName); 
-  }
-
-  public function __debugInfo()
-  {
-    $info = parent::__debugInfo();
-    $info['widgets'] = array();
-    foreach ($this->widgets as $widget) $info['widgets'][] = $widget->__debugInfo();
-    return $info;
   }
 }

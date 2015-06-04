@@ -2,7 +2,9 @@
 
 class ProcessWidgets extends Process implements Module {
 
-  protected $widgets = null;
+  protected $widgets;
+
+  protected $breakpoints;
 
   protected $jsSettings = array();
   
@@ -12,7 +14,7 @@ class ProcessWidgets extends Process implements Module {
       'version' => 001,       // version number of module
       'summary' => _('Helps to manage widgets.'),      // one sentence summary of module
       'icon' => 'cubes',
-      'requires' => array('Widgets', 'JqueryMagnific'),
+      'requires' => array('Widgets', 'JqueryCore', 'JqueryUI', 'JqueryMagnific'),
       'autoload' => 'process=ProcessPageEdit|ProcessTemplate',
       'page' => array(
         'parent' => 'setup',
@@ -29,6 +31,7 @@ class ProcessWidgets extends Process implements Module {
     $this->requireHelperClasses();
     $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookPageWidgetsTab');
     $this->widgets = $this->modules->get('Widgets');
+    $this->breakpoints = $this->modules->get('Breakpoints');
 
     $this->jsSettings['updateInterval'] = 5000;
     $this->jsSettings['notify'] = ($this->modules->has('SystemNotifications')) ? true : false;
@@ -56,24 +59,45 @@ class ProcessWidgets extends Process implements Module {
     if ($parent) $widget->parent = $parent;
     $widget->save();
 
+    $defaultBrk = $this->breakpoints->makeBlankItem();
+    $defaultBrk->media = 'default';
+    $defaultBrk->widget = $widget->id;
+    $defaultBrk->save();
+
     return InputfieldWidgets::renderWidget($widget);
   }
 
   public function executeDelete()
   {
     $widgetId = (integer) $this->sanitizer->text($this->input->widgetId);
-    if ($this->widgets->delete($widgetId)) return '{"error" : false}';
-    else return '{"error" : true}';
+    if ($this->widgets->delete($widgetId)) {
+      $this->breakpoints->deleteAllForWidget($widgetId);
+      return '{"error" : false}';
+    } else {
+      return '{"error" : true}';
+    }
   }
 
   public function executeUpdate()
   {
     $arr = json_decode($this->sanitizer->textarea($this->input->widget), true);
     $id = $arr['id'];
-    $widget = $this->widgets->get($id);
-    $widget->setArray($arr);
-    $widget->save();
-    return json_encode($widget->getArray());
+    $breakpoints = $arr['breakpoints'];
+    $saved = array();
+    foreach ($breakpoints as $brkArr) {
+      $brk = $this->breakpoints->get($brkArr['id']);
+      $brk->setArray($brkArr);
+      $saved[] = $brk->save();
+    }
+
+    if (in_array(false, $saved)) {
+      return json_encode(array(
+        'error' => true,
+        'message' => 'Not all breakpoints are saved!'
+      ));
+    }
+
+    return json_encode($this->widgets->get($brk->widget)->getArrayWithBreakpoints());
   }
 
   public function executeChangeType()
@@ -81,9 +105,11 @@ class ProcessWidgets extends Process implements Module {
     $arr = json_decode($this->sanitizer->textarea($this->input->widget), true);
     $id = $arr['id'];
     $className = $arr['className'];
-    $widget = $this->modules->get($className);
-    $widget->setArray($arr);
-    $widget->save();
+    $widget = $this->widgets->get($id);
+    $newWidget = $this->modules->get($className);
+    $newWidget->setArray($widget->getArray());
+    $this->widgets->remove($widget);
+    $newWidget->save();
     return InputfieldWidgets::renderWidget($this->widgets->get($id));
   }
 
@@ -95,12 +121,14 @@ class ProcessWidgets extends Process implements Module {
 
     $id = (integer) $this->sanitizer->text($this->input->id);
     $widget = $this->widgets->get($id);
-    $wrapper = $widget->getSettingsForm();
+    $classname = $widget->className();
+    $fields = $widget->getSettingsFields();
+    $fields->label = $classname::getModuleInfo()['title'];
 
     if ($this->input->post->submit_sidget_settings_save) {
-      $wrapper->processInput($this->input->post);
-      if (!count($wrapper->getErrors())) {
-        $widget->processSettings($wrapper);
+      $fields->processInput($this->input->post);
+      if (!count($fields->getErrors())) {
+        $widget->processSettingsFields($fields);
         $widget->save();
       }
     }
@@ -111,7 +139,7 @@ class ProcessWidgets extends Process implements Module {
     $form->label = $this->_('Settings Form Label');
 
     // Add a settings fields from widget to form
-    $form->add($wrapper);
+    $form->add($fields);
 
     // Add a hidden id field, where the widget id will be
     $field = $this->modules->get('InputfieldHidden');
@@ -125,6 +153,31 @@ class ProcessWidgets extends Process implements Module {
     $submit->attr('value', $this->_('Save'));
     $form->add($submit);
     return $form->render();
+  }
+
+  public function executeCreateBreakpoint()
+  {
+    $widgetId = (integer) $this->sanitizer->text($this->input->widgetId);
+    $brk = $this->breakpoints->makeBlankItem();
+    $brk->widget = $widgetId;
+    $brk->media = array(0, 1000);
+    $brk->save();
+    return json_encode($brk->getArray());
+  }
+
+  public function executeDeleteBreakpoint()
+  {
+    $brkId = (integer) $this->sanitizer->text($this->input->id);
+    if ($this->breakpoints->delete($brkId)) {
+      return '{"error" : false}';
+    } else {
+      return '{"error" : true}';
+    }
+  }
+
+  public function executeSort()
+  {
+    return 'executeSort';
   }
 
   protected function buildWidgetTab($target = null)
@@ -144,11 +197,13 @@ class ProcessWidgets extends Process implements Module {
     } else {
       throw new WireException("This scenario has not been considered.");
     }
-    foreach ($widgets as $widget) {
+    foreach ($widgets->filter("parent=1") as $widget) {
       $widgetsField->add($widget);
     }
 
     $wrapper->add($widgetsField);
+
+    $wrapper->add($this->getBreakpointCustomCssEditorFields());
 
     // WidgetsUpdate Button
     $button = $this->modules->get('InputfieldButton');
@@ -158,6 +213,23 @@ class ProcessWidgets extends Process implements Module {
     $wrapper->add($button);
 
     return $wrapper;
+  }
+
+  protected function getBreakpointCustomCssEditorFields()
+  {
+    $fields = new InputfieldWrapper();
+    $fields->attr('class', 'CustomCssEditorFields InputfieldHidden');
+    $fields->attr('id', 'CustomCssEditorFields');
+
+    $field = $this->modules->get('InputfieldTextarea');
+    $field->attr('spellcheck', "false");
+    $field->name = 'CustomCss';
+    $field->label = $this->_('Extra CSS rules');
+    $field->description = $this->_("Write custom css with regular css syntax.\n E.g. \n `color : #666; \n border : 1px solid #333;`");
+    $field->rows = 7;
+    $fields->add($field);
+
+    return $fields;
   }
 
   public function hookPageWidgetsTab(HookEvent $event)
@@ -180,10 +252,6 @@ class ProcessWidgets extends Process implements Module {
 
   protected function requireHelperClasses()
   {
-    require_once(__DIR__ . "/Breakpoints.php");
-    require_once(__DIR__ . "/Widget.php");
-    require_once(__DIR__ . "/WidgetArray.php");
-    require_once(__DIR__ . "/PageWidgets.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidgetSettings.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidget.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidgets.php");

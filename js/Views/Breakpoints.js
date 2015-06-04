@@ -18,6 +18,7 @@ define(function (require, exports, module) {
     initialize : function (options) {
       var populated;
       this.$breakpoints = this.$('tbody');
+      this.$spinner = $('<i class="fa fa-lg fa-spin fa-spinner"></i>');
       this._breakpoints = [];
       this.populate();
       this.attachEvents();
@@ -35,20 +36,47 @@ define(function (require, exports, module) {
         return item.cid === breakpoint.cid;
       });
       if (index === -1) return;
-      this._breakpoints.splice(index, 1);
-      this.collection.remove(breakpoint.model);
+
+      this.startSpinning();
+
+      function then (data) {
+        data = wgts.messenger(data);
+        if (data) {
+          this._breakpoints.splice(index, 1);
+          this.collection.remove(breakpoint.model);
+          breakpoint.remove();
+          this.stopSpinning();
+        }
+      }
+
+      $.get(wgts.config.ajaxUrl + 'DeleteBreakpoint/', {
+        id : breakpoint.model.id
+      }, _.bind(then, this));
     },
 
     populate : function () {
       this._breakpoints = this.collection.map(function (breakpoint) {
         return new Breakpoint({model : breakpoint});
-      });
+      }, this);
       this.renderBreakpoints();
     },
 
     addBreakpoint : function (ev) {
       ev.preventDefault();
-      this.collection.add(new BreakpointModel());
+
+      this.startSpinning();
+
+      function then (data) {
+        var breakpoint;
+        breakpoint = new BreakpointModel();
+        breakpoint.parseData(JSON.parse(data));
+        this.collection.add(breakpoint);
+        this.stopSpinning();
+      }
+
+      $.get(wgts.config.ajaxUrl + 'CreateBreakpoint/', {
+        widgetId : this.model.id
+      }, _.bind(then, this));
     },
 
     renderBreakpoint : function (model) {
@@ -69,6 +97,14 @@ define(function (require, exports, module) {
 
       this.$breakpoints.empty().append(breakpoints);
       return this;
+    },
+
+    startSpinning : function () {
+      this.$('.InputfieldWidgetHeader').append(this.$spinner);
+    },
+
+    stopSpinning : function () {
+      this.$spinner.remove();
     }
 
   });

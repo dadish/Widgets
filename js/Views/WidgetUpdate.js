@@ -23,6 +23,7 @@ define(function (require, exports, module) {
       this._status = status.end;
       this._buttonSizeFixed = false;
       this.attachEvents();
+      this.updateButtonStatus();
     },
 
     fixButtonSize : function () {
@@ -35,14 +36,16 @@ define(function (require, exports, module) {
       this.listenTo(wgts.events, 'widgets:update', this.clickEvent);
       this.listenTo(wgts.events, 'widget:updated', this.updated);
       this.listenTo(wgts.events, 'widget:updated', this.notify);
+      this.listenTo(this.model, 'change', this.updateButtonStatus);
     },
 
     update : function (ev) {
+      if (this._disabled) return;
       ev.preventDefault();
       if (this._status !== status.end) return;
       this.fixButtonSize();
       this._status = status.progress;
-      this.$button.empty().append(this.$spinner);
+      this.startSpinning();
       this.triggerUpdate();
     },
 
@@ -54,35 +57,9 @@ define(function (require, exports, module) {
       wgts.events.trigger('widget:update', this.model);
     },
 
-    addNotification : function (widgetId) {
-      var notification, time;
-      time = Math.floor(new Date().getTime() / 1000);
-      Notifications.add({
-        addClass: "runtime",
-        created: time,
-        expires: time + 10,
-        flagNames: "message",
-        flags: 64,
-        from: "Widgets",
-        href: "",
-        html: "",
-        ghostShown: true,
-        icon: "check-square-o",
-        id: _.uniqueId('WidgetNotifications_'),
-        modified: time,
-        progress: 0,
-        qty: 1,
-        runtime: true,
-        title: "Widget Updated. Id: " + widgetId,
-        when: "now"
-      });
-    },
-
     notify : function (model, updated) {
       if (model.id !== this.model.id) return;
       if (!updated) return;
-      this.addNotification(this.model.id);
-      if (!wgts.config.batchUpdate) Notifications.render();
     },
 
     updated : function (model, updated) {
@@ -93,9 +70,36 @@ define(function (require, exports, module) {
           this.updated(model, true);
         }, this), 200);
       }
-      this.$button.empty().append(this.$text);
+      this.stopSpinning();
       this.$button.removeClass('ui-state-active').addClass('ui-state-default');
       this._status = status.end;
+    },
+
+    startSpinning : function () {
+      this.$button.empty().append(this.$spinner);
+    },
+
+    stopSpinning : function () {
+      this.$button.empty().append(this.$text);
+      this.updateButtonStatus();
+    },
+
+    enableButton : function () {
+      this.$button.removeClass('ui-state-disabled');
+      this._disabled = false;
+    },
+
+    disableButton : function () {
+      this.$button.addClass('ui-state-disabled');
+      this._disabled = true;
+    },
+
+    updateButtonStatus : function () {
+      var changed;
+      changed = this.model.isChanged();
+      if (changed) this.enableButton();
+      else this.disableButton();
+      wgts.events.trigger('widgets:change', changed);
     }
     
   });

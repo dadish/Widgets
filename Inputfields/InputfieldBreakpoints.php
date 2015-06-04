@@ -16,24 +16,35 @@ class InputfieldBreakpoints extends InputfieldTextarea {
     $table = $this->modules->get('MarkupAdminDataTable');
     $table->setEncodeEntities(false);
     $table->headerRow(array(
-      $this->_('Media'),
+      $this->_('Media (min)'),
+      $this->_('Media (max)'),
       $this->_('Span'),
       $this->_('Clear'),
+      $this->_('Extra CSS'),
       $this->_('Remove')
       ));
 
-    $breakpoints = $this->widget->getArray()['breakpoints'];
+    $breakpoints = $this->widget->breakpoints();
+
     foreach ($breakpoints as $brk) {
+      $brk = $brk->getArray();
       $arr = array();
       // Media
-      if ($brk['media'] === 'default') $media = "Default";
-      else $media = "<input class='breakpointMedia' type='text' size='10' value='". $brk['media'] ."'/>";
-      $arr[] = $media;
-
+      if ($brk['data']['media'] === 'default') {
+        $media = "Default";
+        $arr[] = $media;
+        $arr[] = "";
+      } else {
+        $media = "<input class='breakpointMedia breakpointMediaMin' type='text' size='10' value='". $brk['data']['media'][0] ."'/>";
+        $arr[] = $media;
+        $media = "<input class='breakpointMedia breakpointMediaMax' type='text' size='10' value='". $brk['data']['media'][1] ."'/>";
+        $arr[] = $media;
+      }
+      
       // Span
-      $span = "<input class='breakpointSpan breakpointSpanNumerator' type='text' size='2' value='". $brk['span'][0] ."'>"; 
+      $span = "<input class='breakpointSpan breakpointSpanNumerator' type='text' size='2' value='". $brk['data']['span'][0] ."'>"; 
       $span .= " of "; 
-      $span .= "<input class='breakpointSpan breakpointSpanDenominator' type='text' size='2' value='". $brk['span'][1] ."'>";
+      $span .= "<input class='breakpointSpan breakpointSpanDenominator' type='text' size='2' value='". $brk['data']['span'][1] ."'>";
       $arr[] = $span;
 
       // Clear
@@ -42,8 +53,11 @@ class InputfieldBreakpoints extends InputfieldTextarea {
       $clear .= "</select>";
       $arr[] = $clear;
 
+      // Extra
+      $arr[] = "<a class='customCss' href='#' data-text-open='". $this->_('Close') ."' data-text-close='". $this->_('Edit') ."'>". $this->_('Edit') ."</a>";
+
       // Remove
-      if ($brk['media'] === 'default') $remove = "";
+      if ($brk['data']['media'] === 'default') $remove = "";
       else $remove = "<a class='remove' href='#'><i class='fa fa-trash'></i></a>";
       $arr[] = $remove;
 

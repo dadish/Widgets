@@ -22,3 +22,45 @@
 .InputfieldWidgetDelete{
   float : right;
 }
+
+.WrapCustomCssEditorFields{
+  display : none;
+  margin : 0px;
+  padding : 0px;
+  list-style : none;
+}
+
+.InputfieldWidget .CustomCssEditorFields textarea{
+  display : block;
+  font-family: Menlo, Monaco, 'Andale Mono', 'Lucida Console', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 15px;
+  color : #555;
+}
+
+.InputfieldWidget .InputfieldHeader .fa-cube{
+  display: block;
+  float: left;
+  margin: 4px 8px 0px 0px;
+}
+
+.InputfieldWidget .InputfieldHeader .fa-trash{
+  display: block;
+  margin: 4px 12px 0px 0px;
+  float : right;
+}
+
+.InputfieldWidget .InputfieldHeader .InputfieldWidgetDragZone{
+  display: block;
+  float: left;
+  height: 2rem;
+}
+
+.InputfieldWidget .InputfieldHeader .InputfieldWidgetDragZone:hover{
+  cursor : move;
+}
+
+.InputfieldWidget .InputfieldHeader .InputfieldWidgetHeaderId{
+  color : #999;
+  font-size: 0.8em;
+}

@@ -33,6 +33,26 @@ define(function (require, exports, module) {
 
     addContainer : function (el) {
       wgts.containers.push(new View({el : el}));
+    },
+
+    messenger : function (data) {
+      var alertMsg, alerted;
+      alerted = false;
+      alertMsg = 'Something went wrong. Please try to refresh the page and try again.';
+      try{
+        data = JSON.parse(data);
+      }catch (e) {
+        alerted = true;
+        alert(alertMsg);
+        return false;
+      }
+      if (data.error !== false && !alerted) {
+        if (data.message) alert(data.message);
+        else alert(alertMsg);
+        return false;
+      } else {
+        return data;
+      }
     }
 
   };

@@ -16,6 +16,9 @@ define(function (reqiure, exports, module) {
     },
 
     updateIfChanged : function (widget) {
+      var widgetJSON;
+      widgetJSON = widget.toJSON();
+
       if (!widget.isChanged()) return wgts.events.trigger('widget:updated', widget, false);
 
       function then (string) {
@@ -24,7 +27,7 @@ define(function (reqiure, exports, module) {
       }
 
       $.post(wgts.config.ajaxUrl + 'Update/', {
-        widget : JSON.stringify(widget.toJSON())
+        widget : JSON.stringify(widgetJSON)
       }, _.bind(then, this));
     }
 

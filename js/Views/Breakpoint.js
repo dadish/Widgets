@@ -5,6 +5,7 @@ define(function (require, exports, module) {
   var
     Backbone                      = require('backbone'),
     html                          = require('text!js/Templates/Breakpoint.html'),
+    CustomCssEditor               = require('js/Views/CustomCssEditor'),
     _                             = require('underscore')
   ;
 
@@ -12,9 +13,11 @@ define(function (require, exports, module) {
 
     events : {
       'click .remove' : 'fadeRemove',
-      'keyup .breakpointMedia' : 'updateMedia',
+      'keyup .breakpointMediaMin' : 'updateMediaMin',
+      'keyup .breakpointMediaMax' : 'updateMediaMax',
       'keyup .breakpointSpanNumerator' : 'updateSpanNumerator',
       'keyup .breakpointSpanDenominator' : 'updateSpanDenominator',
+      'click .customCss' : 'handleCssEditor',
       'change .breakpointClear' : 'updateClear'
     },
 
@@ -26,8 +29,22 @@ define(function (require, exports, module) {
 
     template : _.template(html),
 
-    updateMedia : function (ev) {
-      this.model.set('media', $(ev.target).val());
+    initialize : function (options) {
+      
+      this._customCss = null;
+
+    },
+
+    updateMediaMin : function (ev) {
+      var min;
+      min = parseInt($(ev.target).val(), 10);
+      this.model.set('media', [min, this.model.get('media')[1]]);
+    },
+
+    updateMediaMax : function (ev) {
+      var max;
+      max = parseInt($(ev.target).val(), 10);
+      this.model.set('media', [this.model.get('media')[0], max]);
     },
 
     updateSpanNumerator : function (ev) {
@@ -48,13 +65,40 @@ define(function (require, exports, module) {
 
     fadeRemove : function (ev) {
       ev.preventDefault();
+      wgts.events.trigger('remove:breakpoint', this);
+    },
 
+    remove : function () {
       function then () {
-        wgts.events.trigger('remove:breakpoint', this);
-        this.remove();
+        Backbone.View.prototype.remove.apply(this);
       }
-
       this.$el.fadeOut(200, _.bind(then, this));
+    },
+
+    handleCssEditor : function (ev) {
+      var target;
+      target = $(ev.target);
+      ev.preventDefault();
+      if (!target.is('.customCss')) return;
+      if (this._customCss === null) this.launchCustomCssEditor();
+      else this.closeCustomCssEditor();
+    },
+
+    launchCustomCssEditor : function () {
+      var target;
+      target = this.$('.customCss');
+      target.text(target.attr('data-text-close'));
+      this._customCss = new CustomCssEditor({model : this.model});
+      this._customCss.$el.insertAfter(this.$('.customCss'));
+      this._customCss.show();
+    },
+
+    closeCustomCssEditor : function () {
+      var target;
+      target = this.$('.customCss');
+      target.text(target.attr('data-text-open'));
+      this._customCss.hide(_.bind(this._customCss.remove, this._customCss));
+      this._customCss = null;
     },
 
     render : function () {

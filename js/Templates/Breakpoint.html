@@ -1,7 +1,9 @@
 <% if (media === 'default') { %>
-<td>Default</td>
+  <td>Default</td>
+  <td></td>
 <% } else { %>
-<td><input class="breakpointMedia" type="text" size="10" value="<%= media %>"/></td>
+  <td><input class="breakpointMedia breakpointMediaMin" type="text" size="10" value="<%= media[0] %>"></td>
+  <td><input class="breakpointMedia breakpointMediaMax" type="text" size="10" value="<%= media[1] %>"></td>
 <% } %>
 
 <td>
@@ -17,6 +19,8 @@
     <% }); %>    
   </select>
 </td>
+
+<td><a class='customCss' href='#' data-text-open="Edit" data-text-close="Close">Edit</a></td>
 
 <% if (media === 'default') { %>
 <td></td>

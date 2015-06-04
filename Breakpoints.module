@@ -1,0 +1,162 @@
+<?php
+
+class Breakpoints extends BreakpointArray implements Module {
+
+  const dbTableName = 'widgets_breakpoints';
+
+  protected $database;
+
+  public static function getModuleInfo()
+  {
+    return array(
+      'title' => __("Widget Breakpoints"),
+      'version' => 001,
+      'summary' => __("Manages breakpoints data for widgets. For internal use."),
+      'singular' => true
+      );
+  }
+
+  public function __construct() {
+    parent::__construct();
+    $this->database = wire('database');
+  }
+
+  public function save(Breakpoint $brk)
+  {
+    if (!$brk->isChanged()) return $brk;
+    $table = self::dbTableName;
+    $arr = $brk->getArray();
+    $params = array(
+      ':widget' => $arr['widget'],
+      ':data' => json_encode($arr['data'])
+      );
+    if ($brk->isNew()) {
+      $sql = "INSERT INTO $table (widget, data) VALUES(:widget, :data)";  
+    } else {
+      $sql = "UPDATE $table SET widget = :widget, data = :data WHERE id = :id";
+      $params['id'] = $brk->id;
+    }
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute($params);
+    $id = $this->database->lastInsertId();
+    if ($brk->isNew()) $brk->set('id', $id);
+    if (!$this->has($brk)) $this->add($brk);
+    $brk->resetTrackChanges();
+    return $brk;
+  }
+
+  public function fetchAllForOwner($ownerId)
+  {
+    $table = self::dbTableName;
+    $sql = "SELECT * FROM $table WHERE";
+    $widgets = $this->modules->get('Widgets')->find("owner=$ownerId")->getKeys();
+    if (!count($widgets)) return new BreakpointArray();
+    $sql .= " widget = " . array_shift($widgets);
+    foreach ($widgets as $widget) $sql .= " OR widget = $widget";
+    //
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute();
+    if ($stmt->rowCount()) {
+      return $this->dataToBreakpoints($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+    // if there is no breakpoints then return empty array of widgets
+    return new BreakpointArray();
+  }
+
+  public function fetchAllForWidget($widgetId)
+  {
+    $table = self::dbTableName;
+    $sql = "SELECT * FROM $table WHERE widget = $widgetId";
+    //
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute();
+    if ($stmt->rowCount()) {
+      return $this->dataToBreakpoints($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+    // if there is no breakpoints then return empty array of widgets
+    return new BreakpointArray();
+  }
+
+  public function delete($key)
+  {
+    $table = self::dbTableName;
+    $brk = $this->get($key);
+    $stmt = $this->database->prepare("DELETE FROM $table WHERE id = :id LIMIT 1");
+    $stmt->execute(array('id' => $brk->id));
+    if ($stmt->rowCount()) {
+      $this->remove($key);
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  public function deleteAllForWidget($widgetId)
+  {
+    $table = self::dbTableName;
+    $stmt = $this->database->prepare("DELETE FROM $table WHERE widget = :widget");
+    $stmt->execute(array('widget' => $widgetId));
+    if ($stmt->rowCount()) {
+      foreach ($this->find("widget=$widgetId") as $brk) {
+        $this->remove($brk);
+      }
+      return $stmt->rowCount();
+    } else {
+      return false;
+    }
+  }
+
+  protected function fetch($key)
+  {
+    $table = self::dbTableName;
+    if (is_object($key)) $key = $this->getItemKey($key);
+    $sql = "SELECT * FROM $table WHERE id = :id";
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute(array(
+      ':id' => $key
+      ));
+    if ($stmt->rowCount()) return $this->dataToBreakpoint($stmt->fetchAll(PDO::FETCH_ASSOC)[0]);
+    return null;
+  }
+
+  public function get($key)
+  {
+    if ($this->has($key)) return parent::get($key);
+    return $this->fetch($key);
+  }
+
+  protected function dataToBreakpoint($raw)
+  {
+    $raw['data'] = json_decode($raw['data'], true);
+    $brk = $this->makeBlankItem();
+    $brk->setArray($raw);
+    if (!$this->has($brk)) $this->add($brk);
+    $brk->resetTrackChanges();
+    return $brk;
+  }
+
+  protected function dataToBreakpoints($raw)
+  {
+    $brks = new BreakpointArray();
+    foreach ($raw as $data) $brks->add($this->dataToBreakpoint($data));
+    return $brks;
+  }
+
+  public function ___install()
+  {
+    $table = self::dbTableName;
+    $sql = "CREATE TABLE $table (
+      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+      widget INT UNSIGNED NOT NULL,
+      data TEXT NOT NULL,
+      PRIMARY KEY (id), 
+      INDEX (widget)
+      ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
+    $this->database->query($sql); 
+  }
+
+  public function ___uninstall() {
+    $this->database->query("DROP TABLE " . self::dbTableName); 
+  }
+
+}

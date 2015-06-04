@@ -10,13 +10,13 @@ define(function (require, exports, module) {
   module.exports = Backbone.Model.extend({
 
     initialize : function (options) {
-      this.set('breakpoints', new Breakpoints([{media : 'default', span : [1,1], clear : 'none'}]));
+      this.set('breakpoints', new Breakpoints());
       this._lastString = JSON.stringify(this.toJSON());
       this.listenTo(this.get('breakpoints'), 'change', this.triggerChange);
     },
 
     triggerChange : function () {
-      this.trigger('change', this);
+      this.trigger('change change:breakpoints', this);
     },
 
     defaults : {
@@ -24,17 +24,20 @@ define(function (require, exports, module) {
       ownerType : null,
       parent : 1,
       className : 'Widget',
-      options : {},
       breakpoints : null, // A collection of Breakpoint models
-      breakpointsString : '',
-      renderPages : []
+      sort : null
     },
 
     parseWidget : function (string) {
-      _(JSON.parse(string)).each(function (value, key) {
-        if (key === 'breakpoints') this.get('breakpoints').reset(value);
-        else this.set(key, value);
-      }, this);
+      var data;
+      data = JSON.parse(string);
+      this.set('id', data.id);
+      this.set('owner', data.owner);
+      this.set('ownerType', data.ownerType);
+      this.set('parent', data.parent);
+      this.set('sort', data.sort);
+      this.get('breakpoints').parseData(data.breakpoints);
+              
       this._lastString = JSON.stringify(this.toJSON());
     },
 

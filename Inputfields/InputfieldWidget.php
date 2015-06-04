@@ -24,7 +24,7 @@ class InputfieldWidget extends InputfieldTextarea {
     $field->label = $this->_('Widget Type');
     $field->attr('id', 'InputfieldType_' . $this->widget->id);
     $field->required = true;
-    if (!$container) $field->columnWidth = 50;
+    $field->columnWidth = 50;
     $widgetTypes = array();
     foreach ($this->modules->findByPrefix('Widget') as $module) {
       $title = $module::getModuleInfo()['title'];
@@ -36,14 +36,12 @@ class InputfieldWidget extends InputfieldTextarea {
     $wrap->add($field);
 
     // Settings button
-    if (!$container) {
-      $field = new InputfieldWidgetSettings();
-      $field->setWidget($this->widget);
-      $field->name = 'InputfieldSettings';
-      $field->label = $this->_('Settings');
-      $field->columnWidth = 50;
-      $wrap->add($field);
-    }
+    $field = new InputfieldWidgetSettings();
+    $field->setWidget($this->widget);
+    $field->name = 'InputfieldSettings';
+    $field->label = $this->_('Settings');
+    $field->columnWidth = 50;
+    $wrap->add($field);
 
     // Prepare breakpoints
     $breakpoints = new InputfieldBreakpoints($this->widget);
@@ -71,8 +69,14 @@ class InputfieldWidget extends InputfieldTextarea {
   {
     $this->widget = $widget;
 
-    $this->label = wireIconMarkup('cube') .' '. __('Widget', __FILE__);
-    $this->attr('value', json_encode($this->widget->getArray()));
+    $label = "<span class='InputfieldWidgetDragZone'>";
+    $label .= wireIconMarkup('cube'); 
+    $label .= " <span class='InputfieldWidgetHeaderText'>". __('Widget', __FILE__) . "</span>";
+    $label .= " <span class='InputfieldWidgetHeaderId'>id: ". $this->widget->id ."</span>";
+    $label .= "</span>";
+    $this->label = $label;
+    $arr = $this->widget->getArrayWithBreakpoints();
+    $this->attr('value', json_encode($arr));
     $this->name = $this->widget->id;
 
     return $this;

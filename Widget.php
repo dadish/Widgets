@@ -20,10 +20,12 @@ class Widget extends WireData{
   const ownerTypeTemplate = 2;
 
   /**
-   * A quick reference to the widgets module
+   * A quick reference to the necessary modules
    * 
    */
   protected $widgets;
+
+  protected $breakpoints;
 
   /**
    * Pages that are to be rendered by this widget
@@ -32,13 +34,7 @@ class Widget extends WireData{
   protected $renderPages;
 
   /**
-   * Widget breakpoints.
-   * 
-   */
-  public $breakpoints;
-
-  /**
-   * Additional settings that any widget can accept
+   * Additional settings for this widget
    * 
    */
   protected $settings;
@@ -49,20 +45,17 @@ class Widget extends WireData{
     parent::__construct();
 
     $this->widgets = $this->modules->get('Widgets');
+    $this->breakpoints = $this->modules->get('Breakpoints');
     $this->renderPages = new PageArray();
-    $this->renderPages->setTrackChanges();
-    $this->breakpoints = new BreakpointArray();
-    $this->breakpoints->setWidget($this);
-    $this->breakpoints->setTrackChanges();
     $this->settings = new WireData();
-    $this->settings->setTrackChanges();
 
     $this->set('id', null);
     $this->set('parent', 1);
     $this->set('owner', null);
     $this->set('ownerType', self::ownerTypeTemplate);
-    $this->set('class', $this->className());
-    $this->setTrackChanges();
+    $this->set('class', '');
+    $this->set('sort', null);
+    $this->resetTrackChanges();
   }
 
   public function __set($key, $value)
@@ -103,6 +96,10 @@ class Widget extends WireData{
         throw new WireException("Use addClass() or removeClass() methods to modify class property.");
         break;
 
+      case 'sort':
+        return $this->set($key, (integer) $value);
+        break;
+
       default:
         return parent::__set($key, $value);
         break;
@@ -135,21 +132,14 @@ class Widget extends WireData{
     }
   }
 
-  public function reportIfErrors()
-  {
-    if (is_null($this->get('owner'))) throw new WireException("Please set owner property before saving into db.");
-    $incompatible = "Incompatible pair of owner and ownerType property values. Owner: `$this->owner`. OwnerType: `$this->ownerType`.";
-    if ($this->ownerType == self::ownerTypeTemplate) {
-      if ($this->owner instanceof Template) return;
-      else throw new WireException($incompatible);
-    } else {
-      if ($this->owner instanceof NullPage) throw new WireException("The owner cannot be NullPage. Check if you asigned a correct value for owner property. The current value is " . $this->get('owner'));      
-    }
-  }
-
   public function children()
   {
     return $this->widgets->find("parent=$this");
+  }
+
+  public function breakpoints()
+  {
+    return $this->breakpoints->find("widget=$this");
   }
 
   public function addClass($class)
@@ -205,9 +195,10 @@ class Widget extends WireData{
   {
 
     $prefix = $this->widgets->prefix;
+    $classes = $this->className() . ' ' . $this->class;
     $this->addClass($prefix);
     $this->addClass($prefix . $this->id);
-    $html = "<div class='$this->class'>";
+    $html = "<div class='$classes'>";
     $html .= "<div class='inner wgts-inner'>";
     if ($this->children()->count()) {
       foreach ($this->children() as $child) {
@@ -228,39 +219,63 @@ class Widget extends WireData{
 
   public function getArray()
   {
+    $arr = array();
+    if (!$this->isNew()) $arr['id'] = $this->id;
+    $arr['owner'] = $this->owner->id;
+    $arr['ownerType'] = $this->ownerType;
+    $arr['parent'] = $this->parent->id;
+    $arr['sort'] = $this->sort;
     $data = array();
-    if (!$this->isNew()) $data['id'] = $this->id;
-    $data['owner'] = $this->owner->id;
-    $data['ownerType'] = $this->ownerType;
-    $data['parent'] = $this->parent->id;
     $data['renderPages'] = (string) $this->renderPages;
-    $data['breakpoints'] = $this->breakpoints->getArray();
-    $data['breakpointsString'] = (string) $this->breakpoints;
     $data['class'] = $this->class;
     $data['className'] = $this->className();
     $data['settings'] = $this->settings->getArray();
-    return $data;
+    $arr['data'] = $data;
+    return $arr;
   }
 
-  public function setArray(array $data)
+  public function setArray(array $arr)
   {
-    if (isset($data['id'])) $this->id = $data['id'];
-    if (isset($data['owner'])) $this->owner = $data['owner'];
-    if (isset($data['ownerType'])) $this->ownerType = $data['ownerType'];
-    if (isset($data['parent'])) $this->parent = $data['parent'];
-    if (isset($data['renderPages'])) foreach ($this->pages->find("id=" . $data['renderPages']) as $p) $this->addRender($p);
-    if (isset($data['class'])) $this->addClass($data['class']);
-    if (isset($data['breakpoints'])) $this->breakpoints->populate($data['breakpoints']);
-    if (isset($data['settings'])) $this->settings->setArray($data['settings']);
+    if (isset($arr['id'])) $this->id = $arr['id'];
+    if (isset($arr['owner'])) $this->owner = $arr['owner'];
+    if (isset($arr['ownerType'])) $this->ownerType = $arr['ownerType'];
+    if (isset($arr['parent'])) $this->parent = $arr['parent'];
+    if (isset($arr['sort'])) $this->sort = $arr['sort'];
+
+    if (isset($arr['data']) && is_array($arr['data'])) {
+      $data = $arr['data'];
+      if (isset($data['renderPages'])) {
+        // Remove all and add new ones.
+        // This method is consistent and makes sure
+        // the change is detected if happened.
+        $this->renderPages->removeAll();
+        foreach ($this->pages->find("id=" . $data['renderPages']) as $p) $this->addRender($p);
+      }
+      if (isset($data['class'])) $this->addClass($data['class']);
+      if (isset($data['settings']) && is_array($data['settings'])) {
+        // Manually remove all data from settings and set
+        // the new ones. This will ensure us that if change is
+        // indeed happened then the isChanged method will work
+        // properly
+        foreach ($this->settings->getArray() as $key => $value) {
+          $this->settings->remove($key);
+        }
+        $this->settings->setArray($data['settings']);
+      }
+    }
     return $this;
   }
 
-  public function isChanged($what = '')
+  public function getArrayWithBreakpoints()
   {
-    foreach (array('breakpoints', 'renderPages', 'settings') as $subObject) {
-      if ($this->$subObject->isChanged($what)) return true;
+    $arr = $this->getArray();
+    $breakpoints = $this->breakpoints();
+    if (!$breakpoints->count()) {
+      $this->breakpoints->fetchAllForWidget($this->id);
+      $breakpoints = $this->breakpoints();
     }
-    return parent::isChanged($what);
+    $arr['breakpoints'] = $breakpoints->getArray();
+    return $arr;
   }
 
   public function isNew() {
@@ -269,7 +284,24 @@ class Widget extends WireData{
 
   public function save()
   {
+    $this->reportIfErrors();
     return $this->widgets->save($this);
+  }
+
+  protected function reportIfErrors()
+  {
+    // The widget should have an owner object assigned
+    if (is_null($this->get('owner'))) throw new WireException("Please set owner property before saving into db.");
+    $incompatible = "Incompatible pair of owner and ownerType property values. Owner: `$this->owner`. OwnerType: `$this->ownerType`.";
+    if ($this->ownerType == self::ownerTypeTemplate) {
+      if ($this->owner instanceof Template) return;
+      else throw new WireException($incompatible);
+    } else {
+      if ($this->owner instanceof NullPage) throw new WireException("The owner cannot be NullPage. Check if you asigned a correct value for owner property. The current value is " . $this->get('owner'));      
+    }
+
+    // The widget instance should be one of the ProcessWire module.
+    if (!$this->modules->has($this->className())) throw new WireException("The widget should be a ProcessWire module.");
   }
 
   protected function setTemplateVariables($templateFile)
@@ -295,25 +327,32 @@ class Widget extends WireData{
     return $this->setTemplateVariables(new TemplateFile($file));
   }
 
-  public function getSettingsForm ()
+  public function getSettingsFields ()
   {
     $this->modules->get('JqueryCore');
     $this->modules->get('JqueryUI');
-
-    $wrapper = new InputfieldWrapper();
+    $fields = new InputfieldWrapper();
 
     $field = $this->modules->get('InputfieldPageListSelectMultiple');
     $field->name = "renderPages";
     $field->label = $this->_('Render Pages');
     $field->description = $this->_('Fields that will be rendered by this widget.');
     $field->attr('value', (string) $this->renderPages);
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldText');
+    $field->name = "class";
+    $field->label = $this->_('Class');
+    $field->description = $this->_("Additional custom html classes that you would like to add to your widget. \n This widget will get `" . $this->className() . "` class by default.");
+    $field->attr('value', str_replace($this->className(), '', $this->class));
+    $fields->add($field);
     
-    $wrapper->add($field);
-    return $wrapper;
+    return $fields;
   }
 
-  public function processSettings(InputfieldWrapper $settings)
+  public function processSettingsFields(InputfieldWrapper $settings)
   {
+    // Renew the renderPages property
     $this->renderPages->removeAll();
     $renderPages = $settings->get('renderPages')->value;
     if ($renderPages) {
@@ -321,12 +360,16 @@ class Widget extends WireData{
         $this->addRender($this->pages->get($id));
       }
     }
+
+    // Renew the class property
+    $this->set('class', '');
+    $this->addClass($settings->get('class')->value);
   }
 
   public function __debugInfo()
   {
     $info = parent::__debugInfo();
-    $info['data']['owner'] = $this->owner->__debugInfo();
+    //$info['data']['owner'] = $this->owner->__debugInfo();
     return $info;
   }
 
@@ -334,5 +377,26 @@ class Widget extends WireData{
   {
     if (!$this->isNew()) return (string) $this->id;
     return parent::__toString();
+  }
+
+  public function setTrackChanges($trackChanges = true)
+  {
+    parent::setTrackChanges($trackChanges);
+    $this->renderPages->setTrackChanges($trackChanges);
+    $this->settings->setTrackChanges($trackChanges);
+  }
+
+  public function resetTrackChanges($trackChanges = true)
+  {
+    parent::resetTrackChanges($trackChanges);
+    $this->settings->resetTrackChanges($trackChanges);
+    $this->renderPages->resetTrackChanges($trackChanges);
+  }
+
+  public function isChanged($what = '')
+  {
+    if ($this->renderPages->isChanged($what)) return true;
+    if ($this->settings->isChanged($what)) return true;
+    return parent::isChanged($what);
   }
 }

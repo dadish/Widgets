@@ -30,6 +30,7 @@ define(function (require, exports, module) {
       jsonString = this.$('#Inputfield_' + id).val();
       this.model.parseWidget(jsonString);
       this.breakpoints = new Breakpoints({
+        model : this.model,
         collection : this.model.get('breakpoints'),
         el : this.$('.InputfieldContent .Inputfields .InputfieldBreakpoints')[0]
       });
@@ -64,25 +65,20 @@ define(function (require, exports, module) {
     },
 
     remove : function (ev) {
-      var alertMsg, alerted;
       ev.preventDefault();
       if (this.model.children().length) return this.alertChildren();
+      
       function then (data) {
-        alertMsg = "Something went wrong. Could not delete Widget with the id " + this.model.id + ". \n Please try again.";
-        try{
-          data = JSON.parse(data);
-        }catch (e) {
-          alerted = true;
-          alert(alertMsg);
-        }
-        if (data.error !== false && !alerted) {
-          alert(alertMsg);
-        } else {
+        data = wgts.messenger(data);
+        if (data) {
           wgts.events.trigger('remove:widget', this);
+          this.stopSpinning();
           this.$el.slideUp(_.bind(Backbone.View.prototype.remove, this));
         }
       }
-      $.get(wgts.config.ajaxUrl + '/Delete', {
+      
+      this.startSpinning();
+      $.get(wgts.config.ajaxUrl + 'Delete/', {
         widgetId : this.model.id
       }, _.bind(then, this));
       return false;

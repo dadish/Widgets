@@ -19,14 +19,16 @@ define(function (require, exports, module) {
 
     attachEvents : function () {
       this.listenTo(wgts.events, 'widget:updated', this.updated);
+      this.listenTo(wgts.events, 'widgets:change', this.updateButtonStatus);
     },
 
     update : function () {
+      if (this._disabed) return;
       if (this._status !== status.end) return this.defaultMode();
       if (!wgts.widgets.length) return this.defaultMode();
       this.fixButtonSize();
       this._status = status.progress;
-      this.$button.empty().append(this.$spinner);
+      this.startSpinning();
       this._updates = {};
 
       // Remember all widgets that will be sent to update
@@ -50,12 +52,16 @@ define(function (require, exports, module) {
       this._updates[widget.id] = true;
       all = _(this._updates).every(function (value) { return value; });
       if (all) {
-        this.$button.empty().append(this.$text);
+        this.stopSpinning();
         this.defaultMode();
         this._status = status.end;
-        Notifications.render();
         wgts.config.batchUpdate = false;
       }
+    },
+
+    updateButtonStatus : function (changed) {
+      if (changed) this.enableButton();
+      else this.disableButton();
     }
 
   });

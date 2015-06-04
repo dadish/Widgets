@@ -33,4 +33,12 @@ class WidgetArray extends WireArray {
     }
     return implode('|', $arr);
   }
+
+  public function __debugInfo()
+  {
+    $info = parent::__debugInfo();
+    $info['widgets'] = array();
+    foreach ($this as $widget) $info['widgets'][] = $widget->__debugInfo();
+    return $info;
+  }
 }

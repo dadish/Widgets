@@ -10,6 +10,7 @@ requirejs.config({
 		'requirejs' : 'deps/requirejs/require',
 		'text' : 'deps/requirejs-text/text',
 		'jquery' : '../../../wire/modules/Jquery/JqueryCore/jquery-1.11.1',
+		'jquery-ui' : '../../../wire/modules/Jquery/JqueryUI/JqueryUI',
 		'underscore' : 'deps/underscore/underscore',
 		'backbone' : 'deps/backbone/backbone',
 		'magnific-popup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific'
@@ -18,6 +19,10 @@ requirejs.config({
 		'magnific-popup' : {
 			deps : ['jquery'],
 			exports : 'magnific-popup'
+		},
+		'jquery-ui' : {
+			deps : ['jquery'],
+			exports : 'jquery-ui'
 		}
 	},
 	waitSeconds : 0
@@ -29,7 +34,9 @@ requirejs.config({
 
 define(function (require, exports, module) {
 
+	require('js/polyfills');
 	require('jquery');
+	require('jquery-ui');
 	require('underscore');
 	require('backbone');
 
