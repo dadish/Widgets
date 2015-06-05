@@ -45,7 +45,7 @@ class WidgetArray extends WireArray {
   {
     $info = parent::__debugInfo();
     $info['widgets'] = array();
-    foreach ($this as $widget) $info['widgets'][] = $widget->__debugInfo();
+    foreach ($this as $item) $info['widgets'][] = $item->__debugInfo();
     return $info;
   }
 }
