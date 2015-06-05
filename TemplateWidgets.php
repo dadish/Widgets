@@ -19,8 +19,9 @@ class TemplateWidgets extends WidgetArray {
   public function refresh()
   {
     $this->removeAll();
-    $this->import($this->widgets->find("owner=$this->ownerId, sort=sort"));
-    $this->breakpoints->fetchAllForOwner($this->ownerId);
+    $owner = $this->templates->get($this->ownerId)->name;
+    $this->import($this->widgets->find("owner=$owner, sort=sort"));
+    $this->breakpoints->fetchAllForOwner($owner);
   }
 
   public function render()
@@ -39,6 +40,13 @@ class TemplateWidgets extends WidgetArray {
     return $this->$method();
   }
 
+  public function assetsMin($type = 'css')
+  {
+    if (!in_array($type, array('css', 'js'))) return '';
+    $method = $type . 'Assets';
+    return $this->minify($this->$method());    
+  }
+
   protected function cssAssets()
   {
     $out = "";
@@ -55,7 +63,6 @@ class TemplateWidgets extends WidgetArray {
     foreach ($this as $widget) {
       $out .= $widget->breakpoints();
     }
-    if ($this->config->debug) return $this->minify($out);
     return $out;
   }
 
@@ -66,7 +73,12 @@ class TemplateWidgets extends WidgetArray {
 
   static public function minify($string = '')
   {
-    return $string;
+    // Load minifier
+    require_once(__DIR__ . "/cssmin.php");
+
+    $compressor = new CSSmin();
+
+    return $compressor->run($string);
   }
 
 }
