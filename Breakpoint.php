@@ -29,11 +29,34 @@ class Breakpoint extends WireData {
     $out = "";
     $id = $this->widget;
     $width = $this->span[0] / $this->span[1] * 100;
+
+    // If this breakpoint is not default 
+    // then wrap it in a css @media with provided settings
     if ($this->media !== 'default') {
-      $out .= "@media(min-width:". $this->media[0] ."px)and(max-width:". $this->media[1] ."px){";
+      $out .= "\n@media(min-width:". $this->media[0] ."px) and (max-width:". $this->media[1] ."px){\n";
+      $mediaOffset = "  ";
+    } else {
+      $mediaOffset = "";
+      $out .= "\n";
     }
-    $out .= ".". $prefix . $id ."{width:". $width ."%;clear:". $this->clear ."}";
-    if ($this->media !== 'default') $out .= "}";
+
+    // Open css rules with prefix and id
+    $out .= $mediaOffset . ".$prefix$id {\n";
+
+    // Add default width and clear properties
+    $out .= $mediaOffset . "  width : $width%;\n $mediaOffset clear : $this->clear;\n";
+
+    // Add any custom css...
+    foreach ($this->customCss->getArray() as $property => $value) {
+      $out .= $mediaOffset . "  $property : $value;\n";
+    }
+
+    // Close css rules
+    $out .= $mediaOffset . "}\n";
+
+    // Close css @media wrap
+    if ($this->media !== 'default') $out .= "}\n";
+
     return $out;
   }
 
