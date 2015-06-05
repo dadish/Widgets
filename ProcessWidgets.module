@@ -30,11 +30,17 @@ class ProcessWidgets extends Process implements Module {
     parent::init();
     $this->requireHelperClasses();
     $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookPageWidgetsTab');
+    $this->addHookAfter('ProcessTemplate::buildEditForm', $this, 'hookTemplateWidgetsTab');
     $this->widgets = $this->modules->get('Widgets');
     $this->breakpoints = $this->modules->get('Breakpoints');
 
     $this->jsSettings['updateInterval'] = 5000;
     $this->jsSettings['notify'] = ($this->modules->has('SystemNotifications')) ? true : false;
+
+    // make sure neccessary assets are loaded
+    $this->modules->get('JqueryCore');
+    $this->modules->get('JqueryUI');
+    $this->modules->get('JqueryMagnific');
   }
 
   protected function setJsSettings()
@@ -249,7 +255,7 @@ class ProcessWidgets extends Process implements Module {
     // Find out what page we are editing
     $id = (int) $this->input->post('id');
     if(!$id) $id = (int) $this->input->get('id');
-    $page = wire('pages')->get("id=$id");
+    $page = $this->pages->get("id=$id");
     $this->jsSettings['owner'] = $page->id;
     $this->jsSettings['ownerType'] = Widget::ownerTypePage;
     $this->setJsSettings();
@@ -257,8 +263,24 @@ class ProcessWidgets extends Process implements Module {
     $form = $event->arguments[0];
     $processPageEdit = $event->object;
     $widgetsTab = $this->buildWidgetTab($page);
-    $processPageEdit->addTab($widgetsTab->attr('id'), 'Widgets');
+    $processPageEdit->addTab($widgetsTab->attr('id'), $this->_('Widgets'));
     $form->insertBefore($widgetsTab, $form->get('submit_save'));
+    $event->return = $form;
+  }
+
+  public function hookTemplateWidgetsTab(HookEvent $event)
+  {
+    $template = $event->arguments[0];
+    $form = $event->return;
+    $this->jsSettings['owner'] = $template->id;
+    $this->jsSettings['ownerType'] = Widget::ownerTypeTemplate;
+    $this->setJsSettings();
+    
+    $processTemplate = $event->object;
+    $widgetsTab = $this->buildWidgetTab($template);
+    $widgetsTab->attr('title', $this->_('Widgets'));
+    $widgetsTab->attr('class', 'WireTab');
+    $form->insertBefore($widgetsTab, $form->get('submit'));
     $event->return = $form;
   }
 
