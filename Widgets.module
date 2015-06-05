@@ -100,8 +100,11 @@ class Widgets extends WidgetArray implements Module {
 
       // Get the count for all widgets with the particular parent
       // This way we get the sort for new widget
-      $stmt = $this->database->prepare("SELECT COUNT(*) FROM $table WHERE parent = :parent");
-      $stmt->execute(array(':parent' => $arr['parent']));
+      $stmt = $this->database->prepare("SELECT COUNT(*) FROM $table WHERE parent = :parent AND owner = :owner");
+      $stmt->execute(array(
+        ':parent' => $arr['parent'],
+        ':owner' => $arr['owner']
+        ));
       $params[':sort'] = $stmt->fetch(PDO::FETCH_ASSOC)['COUNT(*)'];
     } else {
       $sql = "UPDATE $table SET owner = :owner, ownerType = :ownerType, parent = :parent, data = :data, sort = :sort WHERE id = :id";
