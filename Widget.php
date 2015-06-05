@@ -220,7 +220,7 @@ class Widget extends WireData{
   {
     $className = $this->className();
     $css = new TemplateFile($this->config->paths->$className . "$className.css");
-    $css->set('prefix', $this->widgets->prefix);
+    $css = $this->setVariables($css);
     return $css->render();
   }
 
@@ -311,11 +311,12 @@ class Widget extends WireData{
     if (!$this->modules->has($this->className())) throw new WireException("The widget should be a ProcessWire module.");
   }
 
-  protected function setTemplateVariables($templateFile)
+  protected function setVariables($templateFile)
   {
     $templateFile->set('renderPages', $this->renderPages);
     $templateFile->set('settings', $this->settings);
     $templateFile->set('widget', $this);
+    $templateFile->set('prefix', $this->widgets->prefix);
     return $templateFile;
   }
 
@@ -332,7 +333,7 @@ class Widget extends WireData{
     if (!is_file($file)){
       $file = $this->getMarkupsPath() . "default.php";
     }
-    return $this->setTemplateVariables(new TemplateFile($file));
+    return $this->setVariables(new TemplateFile($file));
   }
 
   public function getSettingsFields ()
@@ -376,9 +377,16 @@ class Widget extends WireData{
 
   public function __debugInfo()
   {
-    $info = parent::__debugInfo();
-    //$info['data']['owner'] = $this->owner->__debugInfo();
-    return $info;
+    $arr = array();
+    $arr['id'] = (string) $this->id;
+    $arr['owner'] = (string) $this->owner;
+    $arr['ownerType'] = (string) $this->ownerType;
+    $arr['parent'] = (string) $this->parent;
+    $arr['sort'] = (string) $this->sort;
+    $arr['renderPages'] = (string) $this->renderPages;
+    $arr['class'] = (string) $this->class;
+    $arr['settings'] = $this->settings->getArray();
+    return $arr;
   }
 
   public function __toString()
