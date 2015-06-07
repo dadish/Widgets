@@ -19,14 +19,10 @@ define(function (require, exports, module) {
         1  // denominator
       ],
       clear : 'none', // css clear property. Allowed: none, both, right, left.
+      clearOptions : {}, // Hash of possible values and labels for clear property
+      mixins : [], // Array of mixins to be included into this breakpoint.
+      mixinOptions : {}, // Hash of possible values and labels for mixins property.
       customCss : {} // additional custom css rules for this particular breakpoint.
-    },
-
-    toJSONWithClears : function () {
-      var json;
-      json = Backbone.Model.prototype.toJSON.apply(this);
-      json.clearOptions = ['none', 'both', 'right', 'left'];
-      return json;
     },
 
     parseData : function (arr) {
@@ -38,6 +34,9 @@ define(function (require, exports, module) {
       if (_.isArray(arr.data.media)) attr.media = [arr.data.media[0], arr.data.media[1]];
       attr.span = [arr.data.span[0], arr.data.span[1]];
       attr.clear = arr.data.clear;
+      attr.clearOptions = arr.clearOptions;
+      attr.mixins = arr.data.mixins;
+      attr.mixinOptions = arr.mixinOptions;
       attr.customCss = (_.isArray(arr.data.customCss) && !arr.data.customCss.length) ? {} : arr.data.customCss;
       this.set(attr);
     },
@@ -77,10 +76,13 @@ define(function (require, exports, module) {
       json = {};
       json.id = this.get('id');
       json.widget = this.get('widget');
+      json.clearOptions = this.get('clearOptions');
+      json.mixinOptions = this.get('mixinOptions');
       data = {};
       data.media = this.get('media');
       data.span = this.get('span');
       data.clear = this.get('clear');
+      data.mixins = this.get('mixins');
       data.customCss = this.get('customCss');
       json.data = data;
       return json;

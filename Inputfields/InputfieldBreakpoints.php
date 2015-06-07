@@ -20,6 +20,7 @@ class InputfieldBreakpoints extends InputfieldTextarea {
       $this->_('Media (max)'),
       $this->_('Span'),
       $this->_('Clear'),
+      //$this->_('Mixins'),
       $this->_('Extra CSS'),
       $this->_('Remove')
       ));
@@ -48,10 +49,20 @@ class InputfieldBreakpoints extends InputfieldTextarea {
       $arr[] = $span;
 
       // Clear
-      $clear = "<select class='breakpointClear'>";
-      foreach (array('none', 'left', 'right', 'both') as $clr) $clear .= "<option value='$clr'>$clr</option>";
-      $clear .= "</select>";
-      $arr[] = $clear;
+      $clear = $this->modules->get('InputfieldSelect');
+      $clear->name = 'breakpointClear';
+      $clear->required = true;
+      $clear->attr('value', $brk['data']['clear']);
+      $clear->attr('class', 'breakpointClear');
+      $clear->addOptions(Breakpoint::getClearOptions());
+      $arr[] = $clear->render();
+
+      // Mixins
+//      $mixins = $this->modules->get('InputfieldAsmSelect');
+//      $mixins->name = 'breakpointMixins_' . $this->widget->id;
+//      $mixins->attr('class', 'breakpointMixins');
+//      $mixins->addOptions(Breakpoint::getMixinOptions());
+//      $arr[] = $mixins->render();
 
       // Extra
       $arr[] = "<a class='customCss' href='#' data-text-open='". $this->_('Close') ."' data-text-close='". $this->_('Edit') ."'>". $this->_('Edit') ."</a>";

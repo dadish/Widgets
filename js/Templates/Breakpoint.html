@@ -1,28 +1,37 @@
-<% if (media === 'default') { %>
+<% if (data.media === 'default') { %>
   <td>Default</td>
   <td></td>
 <% } else { %>
-  <td><input class="breakpointMedia breakpointMediaMin" type="text" size="10" value="<%= media[0] %>"></td>
-  <td><input class="breakpointMedia breakpointMediaMax" type="text" size="10" value="<%= media[1] %>"></td>
+  <td><input class="breakpointMedia breakpointMediaMin" type="text" size="10" value="<%= data.media[0] %>"></td>
+  <td><input class="breakpointMedia breakpointMediaMax" type="text" size="10" value="<%= data.media[1] %>"></td>
 <% } %>
 
 <td>
-  <input class="breakpointSpan breakpointSpanNumerator" type="text" size="2" value="<%= span[0] %>">
+  <input class="breakpointSpan breakpointSpanNumerator" type="text" size="2" value="<%= data.span[0] %>">
     of 
-  <input class="breakpointSpan breakpointSpanDenominator" type="text" size="2" value="<%= span[1] %>">
+  <input class="breakpointSpan breakpointSpanDenominator" type="text" size="2" value="<%= data.span[1] %>">
 </td>
 
 <td>
   <select class="breakpointClear">
     <% _(clearOptions).each(function (option) { %>
-    <option value="<%= option %>" <% if (option === clear) { %>selected="selected"<% } %>><%= option %></option>
+    <option value="<%= option %>" <% if (option === data.clear) { %>selected="selected"<% } %>><%= option %></option>
     <% }); %>    
   </select>
 </td>
+<%
+// <td>
+//   <select id="Inputfield_breakpointMixins_<%= widget %>" class="breakpointMixins" multiple="multiple">
+//     <% _(mixinOptions).each(function (label, value) {%>
+//     <option value="<%= value %>"><%= label %></option>
+//     <%}); %>
+//   </select>
+// </td>
+%>
 
 <td><a class='customCss' href='#' data-text-open="Edit" data-text-close="Close">Edit</a></td>
 
-<% if (media === 'default') { %>
+<% if (data.media === 'default') { %>
 <td></td>
 <% } else { %>
 <td><a class="remove" href="#"><i class="fa fa-trash"></i></a></td>

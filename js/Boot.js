@@ -13,16 +13,23 @@ requirejs.config({
 		'jquery-ui' : '../../../wire/modules/Jquery/JqueryUI/JqueryUI',
 		'underscore' : 'deps/underscore/underscore',
 		'backbone' : 'deps/backbone/backbone',
-		'magnific-popup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific'
+		'magnific-popup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific',
+		'asm-select' : '../../../wire/modules/Inputfield/InputfieldAsmSelect/asmselect/jquery.asmselect'
 	},
 	shim : {
 		'magnific-popup' : {
 			deps : ['jquery'],
 			exports : 'magnific-popup'
 		},
+
 		'jquery-ui' : {
 			deps : ['jquery'],
 			exports : 'jquery-ui'
+		},
+
+		'asm-select' : {
+			deps : ['jquery'],
+			exports : 'asm-select'
 		}
 	},
 	waitSeconds : 0

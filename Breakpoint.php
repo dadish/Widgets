@@ -17,6 +17,7 @@ class Breakpoint extends WireData {
     $this->set('media', null);
     $this->set('span', array(1,1));
     $this->set('clear', 'none');
+    $this->set('mixins', array());
     $this->customCss = new WireData();
     $this->resetTrackChanges();
     $this->breakpoints = $this->modules->get('Breakpoints');
@@ -65,10 +66,13 @@ class Breakpoint extends WireData {
     $arr = array();
     if (!$this->isNew()) $arr['id'] = $this->id;
     $arr['widget'] = $this->widget->id;
+    $arr['clearOptions'] = self::getClearOptions();
+    $arr['mixinOptions'] = self::getMixinOptions();
     $arr['data'] = array(
       'media' => $this->media,
       'span' => $this->span,
       'clear' => $this->clear,
+      'mixins' => $this->mixins,
       'customCss' => $this->customCss->getArray()
       );
     return $arr;
@@ -84,6 +88,7 @@ class Breakpoint extends WireData {
       if(isset($data['media'])) $this->media = $data['media'];
       if(isset($data['span'])) $this->span = $data['span'];
       if(isset($data['clear'])) $this->clear = $data['clear'];
+      if(isset($data['mixins'])) $this->mixins = $data['mixins'];
       if(isset($data['customCss']) && is_array($data['customCss'])) {
         // Manually remove all data from customCss and set
         // the new ones. This will ensure us that if change is
@@ -205,5 +210,25 @@ class Breakpoint extends WireData {
   {
     parent::resetTrackChanges($trackChanges);
     $this->customCss->resetTrackChanges($trackChanges);
+  }
+
+  public static function getClearOptions()
+  {
+    return array(
+      'none' => 'none',
+      'both' => 'both',
+      'right' => 'right',
+      'left' => 'left'
+      );
+  }
+
+  public static function getMixinOptions()
+  {
+    return array(
+      'first' => 'first',
+      'last' => 'last',
+      'remove-first' => 'remove-first',
+      'remove-last' => 'remove-last'
+      );
   }
 }
