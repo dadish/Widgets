@@ -72,8 +72,12 @@ class Widgets extends WidgetArray implements Module {
   protected function pageWidgets(HookEvent $event)
   {
     $page = $event->object;
-    $ownerId = $this->fetchAllForPage($page);
-    $event->return = new PageWidgets($ownerId);
+    $arr = $this->fetchAllForPage($page);
+    if ($arr['ownerType'] === Widget::ownerTypePage) {
+      $event->return = new PageWidgets($arr['ownerId']);  
+    } else {
+      $event->return = new TemplateWidgets($arr['ownerId']);
+    }
   }
 
   protected function templateWidgets(HookEvent $event)
@@ -145,14 +149,20 @@ class Widgets extends WidgetArray implements Module {
    */
   protected function fetchAllForPage(Page $page)
   {
+    $out = array(
+      'ownerId' => $page->id,
+      'ownerType' => Widget::ownerTypePage
+      );
     // Try to get widgets assigned to Page itself
     // If there are no widgets then get widgets for Page's template
     $widgets = $this->fetchAllByOwner($page->id, Widget::ownerTypePage);
     if ($widgets->count()) {
-      return $page->id;
+      return $out;
     } else {
       $this->fetchAllByOwner($page->template->id, Widget::ownerTypeTemplate);
-      return $page->template->id;
+      $out['ownerId'] = $page->template->id;
+      $out['ownerType'] = Widget::ownerTypeTemplate;
+      return $out;
     }
   }
 
