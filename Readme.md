@@ -1,6 +1,11 @@
 Widgets
 =======
 
+###This readme is outdated. Please ignore. Used here as a todo list.
+
+####TO DO
+- Implement some logic for default widget when creating one.
+
 Widgets is a [ProcessWire][pw] module. It is designed to be as flexible as possible
 for websites that change their look on demand.
 
