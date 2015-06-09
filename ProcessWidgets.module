@@ -73,6 +73,46 @@ class ProcessWidgets extends Process implements Module {
     return InputfieldWidgets::renderWidget($widget);
   }
 
+  protected function createNewFrom($arr = array())
+  {
+    $widget = $this->modules->get($arr['className']);
+    unset($arr['id']);
+    $widget->setArray($arr);
+    $widget->save();
+
+    // Create breakpoints too
+    foreach ($arr['breakpoints'] as $brkArr) {
+      $brkArr['widget'] = $widget->id;
+      unset($brkArr['id']);
+      $brk = $this->breakpoints->makeBlankItem();
+      $brk->setArray($brkArr);
+      $brk->save();
+    }
+
+    return $widget;
+  }
+
+  protected function batchCreateNewFrom($arr = array(), $owner = 0, $ownerType = 0)
+  {
+    if (!$owner || !$ownerType) throw new WireException("Please provide an owner and an ownerType.");
+    
+    $out = new WidgetArray();
+    foreach ($arr as $r) {
+      $r['owner'] = $owner;
+      $r['ownerType'] = $ownerType;
+      $out->add($this->createNewFrom($r));
+    }
+    return $out;
+  }
+
+  public function executeCopy()
+  {
+    $widgets = json_decode($this->sanitizer->textarea($this->input->widgets), true);
+    $owner = (integer) $this->sanitizer->text($this->input->owner);
+    $ownerType = (integer) $this->sanitizer->text($this->input->ownerType);
+    return json_encode($this->batchCreateNewFrom($widgets, $owner, $ownerType)->getArray());
+  }
+
   public function executeDelete()
   {
     $widgetId = (integer) $this->sanitizer->text($this->input->widgetId);

@@ -75,7 +75,7 @@ class InputfieldWidget extends InputfieldTextarea {
     $label .= " <span class='InputfieldWidgetHeaderId'>id: ". $this->widget->id ."</span>";
     $label .= "</span>";
     $this->label = $label;
-    $arr = $this->widget->getArrayWithBreakpoints();
+    $arr = $this->widget->getArray();
     $this->attr('value', json_encode($arr));
     $this->name = $this->widget->id;
 

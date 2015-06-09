@@ -35,6 +35,7 @@ define(function (require, exports, module) {
       this.set('owner', data.owner);
       this.set('ownerType', data.ownerType);
       this.set('parent', data.parent);
+      this.set('className', data.data.className);
       this.set('sort', data.sort);
       this.get('breakpoints').parseData(data.breakpoints);
               

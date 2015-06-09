@@ -91,7 +91,7 @@ class Widgets extends WidgetArray implements Module {
   {
     if (!$widget->isChanged()) return $widget;
     $table = self::dbTableName;
-    $arr = $widget->getArray();
+    $arr = $widget->getArray(false);
 
     $params = array(
       ':owner' => $arr['owner'],

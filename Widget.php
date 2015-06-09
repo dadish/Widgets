@@ -1,5 +1,4 @@
 <?php
-
 /**
  * A widget.
  * 
@@ -61,13 +60,16 @@ class Widget extends WireData{
   public function __set($key, $value)
   {
     switch ($key) {
+      case 'id':
+        return $this->set($key, (integer) $value);
+        break;
       case 'ownerType':
         if (
           $value == self::ownerTypePage ||
           $value == self::ownerTypeTemplate 
         ) {
           foreach ($this->children() as $child) $child->$key = $value;
-          return $this->set($key, $value);
+          return $this->set($key, (integer) $value);
         } else {
           throw new WireException("Wrong value for ownerType `$ownerType`");
         }
@@ -143,7 +145,12 @@ class Widget extends WireData{
 
   public function breakpoints()
   {
-    return $this->breakpoints->find("widget=$this");
+    $breakpoints = $this->breakpoints->find("widget=$this");
+    if (!$breakpoints->count()) {
+      $this->breakpoints->fetchAllForWidget($this->id);
+      $breakpoints = $this->breakpoints->find("widget=$this");
+    }
+    return $breakpoints;
   }
 
   public function addClass($class)
@@ -224,7 +231,7 @@ class Widget extends WireData{
     return $css->render();
   }
 
-  public function getArray()
+  public function getArray($withBreakpoints = true)
   {
     $arr = array();
     if (!$this->isNew()) $arr['id'] = $this->id;
@@ -238,6 +245,7 @@ class Widget extends WireData{
     $data['className'] = $this->className();
     $data['settings'] = $this->settings->getArray();
     $arr['data'] = $data;
+    if ($withBreakpoints) $arr['breakpoints'] = $this->breakpoints()->getArray();
     return $arr;
   }
 
@@ -273,20 +281,8 @@ class Widget extends WireData{
     return $this;
   }
 
-  public function getArrayWithBreakpoints()
-  {
-    $arr = $this->getArray();
-    $breakpoints = $this->breakpoints();
-    if (!$breakpoints->count()) {
-      $this->breakpoints->fetchAllForWidget($this->id);
-      $breakpoints = $this->breakpoints();
-    }
-    $arr['breakpoints'] = $breakpoints->getArray();
-    return $arr;
-  }
-
   public function isNew() {
-    return ! (boolean) $this->id; 
+    return ! (boolean) $this->id;
   }
 
   public function save()

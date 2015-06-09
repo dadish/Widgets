@@ -16,11 +16,20 @@ define(function (reqiure, exports, module) {
     },
 
     updateWidgets : function (widget) {
-      var widgets;
+      var widgets, action;
       widgets = [];
 
+      if (
+        this.sample().get('owner') == wgts.config.owner &&
+        this.sample().get('ownerType') == wgts.config.ownerType
+      ) {
+        action = 'Update/';
+      } else {
+        action = 'Copy/';
+      }
+
       this.each(function (widget) {
-       if (widget.isChanged()) widgets.push(widget.toJSON());
+       if (widget.isChanged() || action === 'Copy/') widgets.push(widget.toJSON());
       });
 
       function then (string) {
@@ -28,7 +37,9 @@ define(function (reqiure, exports, module) {
         wgts.events.trigger('widgets:updated', widget);
       }
 
-      $.post(wgts.config.ajaxUrl + 'Update/', {
+      $.post(wgts.config.ajaxUrl + action, {
+        owner : wgts.config.owner,
+        ownerType : wgts.config.ownerType,
         widgets : JSON.stringify(widgets)
       }, _.bind(then, this));
     },
