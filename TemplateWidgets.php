@@ -60,8 +60,8 @@ class TemplateWidgets extends WidgetArray {
       }
     }
 
-    foreach ($this as $widget) {
-      $out .= $widget->breakpoints();
+    foreach ($this->find("parent=1") as $widget) {
+      $out .= $widget->breakpointsCss();
     }
     return $out;
   }

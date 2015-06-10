@@ -108,6 +108,11 @@ class Breakpoint extends WireData {
     return parent::isChanged($what);
   }
 
+  public function getCustom($property)
+  {
+    return $this->customCss->$property;
+  }
+
   public function addCustom($property = '', $value = null)
   {
     $this->customCss->$property = $value;    
