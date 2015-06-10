@@ -226,12 +226,15 @@ class Widget extends WireData{
   protected function getCssFile()
   {
     $className = $this->className();
-    return new TemplateFile($this->config->paths->$className . "$className.css");
+    $filename = $this->config->paths->$className . "$className.css";
+    if (!is_file($filename)) return false;
+    return new TemplateFile($filename);
   }
 
   public function css()
   {
     $css = $this->getCssFile();
+    if ($css === false) return '';
     $css = $this->setVariables($css);
     return $css->render();
   }
@@ -360,6 +363,7 @@ class Widget extends WireData{
     $field->label = $this->_('Class');
     $field->description = $this->_("Additional custom html classes that you would like to add to your widget. \n This widget will get `" . $this->className() . "` class by default.");
     $field->attr('value', str_replace($this->className(), '', $this->class));
+    $field->collapsed = Inputfield::collapsedBlank;
     $fields->add($field);
     
     return $fields;

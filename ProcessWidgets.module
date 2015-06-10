@@ -205,9 +205,11 @@ class ProcessWidgets extends Process implements Module {
 
     if ($this->input->post->submit_sidget_settings_save) {
       $form->processInput($this->input->post);
-      if (!count($fields->getErrors())) {
+      if (!count($form->getErrors())) {
         $widget->processSettingsFields($form);
-        $widget->save();
+        if (!count($form->getErrors())) {
+          $widget->save();  
+        }
       }
     }
 
