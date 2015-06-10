@@ -223,10 +223,15 @@ class Widget extends WireData{
     return $html;
   }
 
-  public function css()
+  protected function getCssFile()
   {
     $className = $this->className();
-    $css = new TemplateFile($this->config->paths->$className . "$className.css");
+    return new TemplateFile($this->config->paths->$className . "$className.css");
+  }
+
+  public function css()
+  {
+    $css = $this->getCssFile();
     $css = $this->setVariables($css);
     return $css->render();
   }
