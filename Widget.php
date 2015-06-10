@@ -351,7 +351,7 @@ class Widget extends WireData{
     $field = $this->modules->get('InputfieldPageListSelectMultiple');
     $field->name = "renderPages";
     $field->label = $this->_('Render Pages');
-    $field->description = $this->_('Fields that will be rendered by this widget.');
+    $field->description = $this->_('Pages that will be rendered by this widget.');
     $field->attr('value', (string) $this->renderPages);
     $fields->add($field);
 
