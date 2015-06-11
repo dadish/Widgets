@@ -345,16 +345,23 @@ class Widget extends WireData{
     return $this->setVariables(new TemplateFile($file));
   }
 
-  public function getSettingsFields ()
+  public function getSettingsFields ($multipleRenders = true)
   {
     $this->modules->get('JqueryCore');
     $this->modules->get('JqueryUI');
     $fields = new InputfieldWrapper();
 
-    $field = $this->modules->get('InputfieldPageListSelectMultiple');
+    if ($multipleRenders) $field = $this->modules->get('InputfieldPageListSelectMultiple');
+    else $field = $this->modules->get('InputfieldPageListSelect');
+
     $field->name = "renderPages";
-    $field->label = $this->_('Render Pages');
-    $field->description = $this->_('Pages that will be rendered by this widget.');
+
+    if ($multipleRenders) $field->label = $this->_('Render Pages');
+    else $field->label = $this->_('Render Page');
+    
+    if ($multipleRenders) $field->description = $this->_('Pages that will be rendered by this widget.');
+    else $field->description = $this->_('Page that will be rendered by this widget.');
+    
     $field->attr('value', (string) $this->renderPages);
     $fields->add($field);
 
@@ -373,11 +380,13 @@ class Widget extends WireData{
   {
     // Renew the renderPages property
     $this->renderPages->removeAll();
-    $renderPages = $settings->get('renderPages')->value;
-    if ($renderPages) {
-      foreach ($renderPages as $id) {
-        $this->addRender($this->pages->get($id));
+    $renderPages = $settings->get('renderPages');
+    if ($renderPages instanceof InputfieldHasArrayValue) {
+      foreach ($renderPages->value as $id) {
+        $this->addRender($id);
       }
+    } else {
+      $this->addRender($renderPages->value);
     }
 
     // Renew the class property
@@ -424,5 +433,13 @@ class Widget extends WireData{
     if ($this->renderPages->isChanged($what)) return true;
     if ($this->settings->isChanged($what)) return true;
     return parent::isChanged($what);
+  }
+
+  public static function pageSummary($page, $length = 255, $summary_field = 'summary', $body_field = 'body') {
+    if ($page->$summary_field) return $page->$summary_field;
+    $intro = mb_substr(strip_tags($page->$body_field), 0, $length); 
+    $lastPeriodPos = mb_strrpos($intro, '.'); 
+    if($lastPeriodPos !== false) $intro = mb_substr($intro, 0, $lastPeriodPos); 
+    return ($intro === '') ? '' : $intro . '...'; 
   }
 }
