@@ -59,7 +59,7 @@ class ProcessWidgets extends Process implements Module {
     $ownerType = (integer) $this->sanitizer->text($this->input->ownerType);
     $parent = (integer) $this->sanitizer->text($this->input->parent);
     
-    $widget = $this->modules->get('WidgetHeading');
+    $widget = $this->modules->get('WidgetContainer');
     $widget->owner = $owner;
     $widget->ownerType = $ownerType;
     if ($parent) $widget->parent = $parent;
