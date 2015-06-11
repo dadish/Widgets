@@ -1,0 +1,150 @@
+<?php
+
+/**
+ * WidgetContainer - A special container widget. Allows you to group widgets into blocks.
+ *
+ *
+ */
+
+class WidgetContainer extends Widget implements Module {
+
+  /**
+   * getModuleInfo is a module required by all modules to tell ProcessWire about them
+   *
+   * @return array
+   *
+   */
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Widget Container', 
+      'version' => 001, 
+      'summary' => 'A special container widget. Allows you to group widgets into blocks.',
+      'icon' => 'cubes',
+      'requires' => array('Widgets')
+      );
+  }
+
+  public static function getDefaultSettings()
+  {
+    return array(
+      'float' => 'left',
+      'gutter_position' => 'right',
+      'gutter' => '0.5rem'
+      );
+  }
+
+  public function setArray(array $arr)
+  {
+    parent::setArray($arr);
+    $settings = array_merge(self::getDefaultSettings(), $this->settings->getArray());
+    $this->settings->setArray($settings);
+  }
+
+  public function getSettingsFields($multipleRenders = true)
+  {
+    $fields = parent::getSettingsFields($multipleRenders);
+
+    // Remove renderPages field. We do not need it for container widgets
+    $fields->remove($fields->get('renderPages'));
+
+    // Add subwidgets float setting
+    $field = $this->modules->get('InputfieldSelect');
+    $field->name = 'float';
+    $field->label = $this->_('Widgets Float');
+    $field->description = $this->_('This will force children widgets float the way you want.');
+    $field->attr('value', $this->settings->float);
+    $field->columnWidth = 33;
+    $field->addOptions(array(
+      'left' => 'left',
+      'right' => 'right'
+      ));
+    $field->required = true;
+    $fields->add($field);
+
+    // Add a subwidgets gutter position
+    // Add subwidgets float setting
+    $field = $this->modules->get('InputfieldSelect');
+    $field->name = 'gutter_position';
+    $field->label = $this->_('Widgets gutter position');
+    $field->description = $this->_('Where you want to place the gutter position?');
+    $field->attr('value', $this->settings->gutter_position);
+    $field->columnWidth = 33;
+    $field->addOptions(array(
+      'left' => 'left',
+      'right' => 'right',
+      'both' => 'both'
+      ));
+    $field->required = true;
+    $fields->add($field);
+
+    // Add a subwidgets gutter setting
+    $field = $this->modules->get('InputfieldText');
+    $field->name = 'gutter';
+    $field->label = $this->_('Widgets Gutter');
+    $field->description = $this->_('This will be applied to direct children widgets only.');
+    $field->attr('value', $this->settings->gutter);
+    $field->columnWidth = 33;
+    $fields->add($field);
+
+    return $fields;
+  }
+
+  public function processSettingsFields(InputfieldWrapper $settings)
+  {
+    // Renew the class property
+    $this->set('class', '');
+    $this->addClass($settings->get('class')->value);
+
+    // Update gutter value
+    $this->settings->gutter = $settings->get('gutter')->value;
+    $this->settings->gutter_position = $settings->get('gutter_position')->value;
+    $this->settings->float = $settings->get('float')->value;
+  }
+
+  public function breakpointsCss()
+  {
+    $padding = array();
+    $gutter_position = $this->settings->gutter_position;
+    $gutter = $this->settings->gutter;
+    if ($gutter_position === 'right') {
+      $padding['padding-right'] = $gutter;
+    } else if ($gutter_position === 'left') {
+      $padding['padding-left'] = $gutter;
+    } else if ($gutter_position === 'both') {
+      $padding['padding-right'] = $gutter;
+      $padding['padding-left'] = $gutter;
+    }
+
+    foreach ($this->children() as $child) {
+      foreach ($child->breakpoints() as $breakpoint) {
+        foreach ($padding as $property => $value) {
+          if (is_null($breakpoint->getCustom($property))) $breakpoint->addCustom($property, $value);
+        }
+      }
+    }
+
+    $out = '';
+    $out .= $this->breakpoints();
+    foreach ($this->children() as $child) {
+      $out .= $child->breakpointsCss();
+    }
+
+    return $out;
+  }
+
+  public function render()
+  {
+
+    $prefix = $this->widgets->prefix;
+    $this->addClass($prefix);
+    $this->addClass($prefix . $this->id);
+    $classes = $this->className() . ' ' . $this->class;
+    $html = "<div class='$classes'>";
+    foreach ($this->children() as $child) {
+      $html .= $child->render();
+    }
+    $html .= "</div>";
+    return $html;
+  }
+
+}
