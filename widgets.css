@@ -1,8 +1,8 @@
 .<?= $prefix ?>{
   display: inline-block; 
-  float : left;
   width : 100%;
   padding : 0;
+  float : left;
 }
 
 .<?= $prefix ?>, .<?= $prefix ?> *{
@@ -14,4 +14,14 @@
 .<?= $prefix ?>-inner{
   display: inline-block;
   width: 100%;
+}
+
+.WidgetContainer{
+  float : none;
+}
+
+.WidgetContainer:after{
+	content: " ";
+  display: block;
+  clear: both;
 }
