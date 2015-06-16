@@ -113,7 +113,6 @@ define(function (require, exports, module) {
     },
 
     onSortUpdate : function (ev, ui) {
-      var id;
       _(this.$widgets.children()).each(function(el, index) {
         wgts.widgets.get(parseInt($(el).attr('data-id'), 10)).set('sort', index);
       });
