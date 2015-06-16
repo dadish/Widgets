@@ -145,10 +145,10 @@ class Widget extends WireData{
 
   public function breakpoints()
   {
-    $breakpoints = $this->breakpoints->find("widget=$this");
+    $breakpoints = $this->breakpoints->find("widget=$this, sort=sort");
     if (!$breakpoints->count()) {
       $this->breakpoints->fetchAllForWidget($this->id);
-      $breakpoints = $this->breakpoints->find("widget=$this");
+      $breakpoints = $this->breakpoints->find("widget=$this, sort=sort");
     }
     return $breakpoints;
   }

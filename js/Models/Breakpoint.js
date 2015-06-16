@@ -10,6 +10,7 @@ define(function (require, exports, module) {
 
     defaults : {
       widget : null, // the widget that this breakpoint belongs to
+      sort : null,
       media : [ // @media (min/max-width : ...) a css property
         0, // min
         100 // max
@@ -34,6 +35,7 @@ define(function (require, exports, module) {
       if (_.isArray(arr.data.media)) attr.media = [arr.data.media[0], arr.data.media[1]];
       attr.span = [arr.data.span[0], arr.data.span[1]];
       attr.clear = arr.data.clear;
+      attr.sort = arr.sort;
       attr.clearOptions = arr.clearOptions;
       attr.mixins = arr.data.mixins;
       attr.mixinOptions = arr.mixinOptions;
@@ -76,6 +78,7 @@ define(function (require, exports, module) {
       json = {};
       json.id = this.get('id');
       json.widget = this.get('widget');
+      json.sort = this.get('sort');
       json.clearOptions = this.get('clearOptions');
       json.mixinOptions = this.get('mixinOptions');
       data = {};

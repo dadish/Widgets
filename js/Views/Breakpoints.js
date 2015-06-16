@@ -28,6 +28,20 @@ define(function (require, exports, module) {
       this.listenTo(this.collection, 'add', this.renderBreakpoint);
       this.listenTo(this.collection, 'reset', this.populate);
       this.listenTo(wgts.events, 'remove:breakpoint', this.removeBreakpoint);
+
+      // Init sortable
+      this.$breakpoints.sortable({
+        handle : ".BreakpointSortWrapper",
+        axis : 'y',
+        cursor : 'move',
+        update : _.bind(this.onSortUpdate, this)
+      });
+    },
+
+    onSortUpdate : function (ev, ui) {
+      _(this.$breakpoints.children()).each(function(el, index) {
+        this.collection.get(parseInt($(el).attr('id'), 10)).set('sort', index);
+      }, this);
     },
 
     removeBreakpoint : function (breakpoint) {

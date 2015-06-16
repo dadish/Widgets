@@ -6,7 +6,6 @@ define(function (require, exports, module) {
     Backbone                      = require('backbone'),
     html                          = require('text!js/Templates/Breakpoint.html'),
     CustomCssEditor               = require('js/Views/CustomCssEditor'),
-    //asmSelect                     = require('asm-select'),
     _                             = require('underscore')
   ;
 
@@ -22,8 +21,11 @@ define(function (require, exports, module) {
       'change .breakpointClear' : 'updateClear'
     },
 
-    attributes : {
-      'role' : 'row'
+    attributes : function () {
+      return {
+        id : this.model.id,
+        role : 'row'
+      };
     },
 
     tagName : 'tr',
@@ -101,10 +103,7 @@ define(function (require, exports, module) {
     },
 
     render : function () {
-//      var $mixins;
       this.$el.empty().append(this.template(this.model.toJSON()));
-//      $mixins = this.$('.breakpointMixins');
-//      $mixins.asmSelect(config[$mixins.attr('id')] || {sortable : true});
       return this;
     }
 

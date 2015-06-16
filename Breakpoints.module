@@ -31,10 +31,19 @@ class Breakpoints extends BreakpointArray implements Module {
       ':data' => json_encode($arr['data'])
       );
     if ($brk->isNew()) {
-      $sql = "INSERT INTO $table (widget, data) VALUES(:widget, :data)";  
+      $sql = "INSERT INTO $table (widget, data, sort) VALUES(:widget, :data, :sort)";
+
+      // Get the count for all widgets with the particular parent
+      // This way we get the sort for new widget
+      $stmt = $this->database->prepare("SELECT COUNT(*) FROM $table WHERE widget = :widget");
+      $stmt->execute(array(
+        ':widget' => $arr['widget']
+        ));
+      $params[':sort'] = $stmt->fetch(PDO::FETCH_ASSOC)['COUNT(*)'];
     } else {
-      $sql = "UPDATE $table SET widget = :widget, data = :data WHERE id = :id";
-      $params['id'] = $brk->id;
+      $sql = "UPDATE $table SET widget = :widget, data = :data, sort = :sort WHERE id = :id";
+      $params[':id'] = $brk->id;
+      $params[':sort'] = $arr['sort'];
     }
     $stmt = $this->database->prepare($sql);
     $stmt->execute($params);
@@ -149,8 +158,10 @@ class Breakpoints extends BreakpointArray implements Module {
       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
       widget INT UNSIGNED NOT NULL,
       data TEXT NOT NULL,
+      sort INT(3),
       PRIMARY KEY (id), 
-      INDEX (widget)
+      INDEX (widget),
+      INDEX (sort)
       ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8";
     $this->database->query($sql); 
   }

@@ -74,3 +74,16 @@
 .InputfieldWidget .InputfieldBreakpoints .asmListSortable .asmListItemRemove i{
   color : #fff;
 }
+
+.InputfieldBreakpoints .BreakpointSortWrapper{
+  text-align: center;
+  width: 34px;
+}
+
+.InputfieldBreakpoints .BreakpointSortWrapper:hover{
+  cursor : move;
+}
+
+.InputfieldBreakpoints table tbody .ui-sortable-helper{
+  display: table;
+}

@@ -15,7 +15,9 @@ class InputfieldBreakpoints extends InputfieldTextarea {
     $out = "";
     $table = $this->modules->get('MarkupAdminDataTable');
     $table->setEncodeEntities(false);
+    $table->setSortable(false);
     $table->headerRow(array(
+      '',
       $this->_('Media (min)'),
       $this->_('Media (max)'),
       $this->_('Span'),
@@ -30,6 +32,9 @@ class InputfieldBreakpoints extends InputfieldTextarea {
     foreach ($breakpoints as $brk) {
       $brk = $brk->getArray();
       $arr = array();
+
+      $arr[] = wireIconMarkup('arrows', 'breakpointSort');
+
       // Media
       if ($brk['data']['media'] === 'default') {
         $media = "Default";

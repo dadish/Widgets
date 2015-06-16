@@ -14,6 +14,7 @@ class Breakpoint extends WireData {
     parent::__construct();
     $this->set('id', null);
     $this->set('widget', null);
+    $this->set('sort', null);
     $this->set('media', null);
     $this->set('span', array(1,1));
     $this->set('clear', 'none');
@@ -66,6 +67,7 @@ class Breakpoint extends WireData {
     $arr = array();
     if (!$this->isNew()) $arr['id'] = $this->id;
     $arr['widget'] = $this->widget->id;
+    $arr['sort'] = $this->widget->id;
     $arr['clearOptions'] = self::getClearOptions();
     $arr['mixinOptions'] = self::getMixinOptions();
     $arr['data'] = array(
@@ -82,6 +84,7 @@ class Breakpoint extends WireData {
   {
     if(isset($arr['id'])) $this->id = $arr['id'];
     if(isset($arr['widget'])) $this->widget = $arr['widget'];
+    if(isset($arr['sort'])) $this->sort = $arr['sort'];
     
     if(isset($arr['data']) && is_array($arr['data'])) {
       $data = $arr['data'];
@@ -157,6 +160,10 @@ class Breakpoint extends WireData {
 
       case 'customCss':
         throw new WireException('Do not modify customCss property directly. Use addCustom() and removeCustom() methods instead.');
+        break;
+
+      case 'sort':
+        return $this->set($key, (integer) $value);
         break;
       
       default:
