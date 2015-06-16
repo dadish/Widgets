@@ -72,19 +72,47 @@ class Widgets extends WidgetArray implements Module {
   protected function pageWidgets(HookEvent $event)
   {
     $page = $event->object;
+    
+    // Check if page is already have it's widgets
+    // and return if it has
+    $pageWidgets = $page->get('pageWidgets');    
+    if (!is_null($pageWidgets) && $pageWidgets instanceof TemplateWidgets) {
+      $event->return = $pageWidgets;
+      return;
+    }
+
+    // Else fetch all widgets and populate an object for
+    // pageWidgets
     $arr = $this->fetchAllForPage($page);
     if ($arr['ownerType'] === Widget::ownerTypePage) {
-      $event->return = new PageWidgets($arr['ownerId']);  
+      $pageWidgets = new PageWidgets($arr['ownerId']);
     } else {
-      $event->return = new TemplateWidgets($arr['ownerId']);
+      $pageWidgets = new TemplateWidgets($arr['ownerId']);
     }
+
+    // Set pageWidgets to the page before returning
+    $page->setQuietly('pageWidgets', $pageWidgets);
+    $event->return = $pageWidgets;
   }
 
   protected function templateWidgets(HookEvent $event)
   {
     $template = $event->object;
+
+    // Check if template is already have it's widgets
+    // and return if it has
+    $templateWidgets = $template->get('templateWidgets');    
+    if (!is_null($templateWidgets) && $templateWidgets instanceof TemplateWidgets) {
+      $event->return = $templateWidgets;
+      return;
+    }
+
     $ownerId = $this->fetchAllForTemplate($template);
-    $event->return = new TemplateWidgets($ownerId);
+    $templateWidgets = new TemplateWidgets($ownerId);
+    
+    // Set templateWidgets to the template before returning
+    $template->setQuietly('templateWidgets', $templateWidgets);
+    $event->return = $templateWidgets;
   }
 
   public function save(Widget $widget)
