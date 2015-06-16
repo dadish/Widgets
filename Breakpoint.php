@@ -67,7 +67,7 @@ class Breakpoint extends WireData {
     $arr = array();
     if (!$this->isNew()) $arr['id'] = $this->id;
     $arr['widget'] = $this->widget->id;
-    $arr['sort'] = $this->widget->id;
+    $arr['sort'] = $this->sort;
     $arr['clearOptions'] = self::getClearOptions();
     $arr['mixinOptions'] = self::getMixinOptions();
     $arr['data'] = array(
