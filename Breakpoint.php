@@ -163,6 +163,7 @@ class Breakpoint extends WireData {
         break;
 
       case 'sort':
+      case 'id':
         return $this->set($key, (integer) $value);
         break;
       

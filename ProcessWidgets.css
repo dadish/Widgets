@@ -87,3 +87,7 @@
 .InputfieldBreakpoints table tbody .ui-sortable-helper{
   display: table;
 }
+
+#wrap_Inputfield_widgets_clone_template input{
+  display : none;
+}

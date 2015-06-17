@@ -14,11 +14,7 @@ define(function (require, exports, module) {
       end : 'end',
       changed : 'changed',
       unchanged : 'unchanged'
-    },
-
-    updateInterval : 10000,
-
-    batchUpdate : false
+    }
 
   });
 

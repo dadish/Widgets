@@ -61,9 +61,11 @@ class Widget extends WireData{
   {
     switch ($key) {
       case 'id':
+      case 'sort':
         return $this->set($key, (integer) $value);
         break;
       case 'ownerType':
+        $value = (integer) $value;
         if (
           $value == self::ownerTypePage ||
           $value == self::ownerTypeTemplate 
@@ -71,7 +73,7 @@ class Widget extends WireData{
           foreach ($this->children() as $child) $child->$key = $value;
           return $this->set($key, (integer) $value);
         } else {
-          throw new WireException("Wrong value for ownerType `$ownerType`");
+          throw new WireException("Wrong value for ownerType `$value`");
         }
         break;
 
@@ -96,10 +98,6 @@ class Widget extends WireData{
 
       case 'class':
         throw new WireException("Use addClass() or removeClass() methods to modify class property.");
-        break;
-
-      case 'sort':
-        return $this->set($key, (integer) $value);
         break;
 
       default:

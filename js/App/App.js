@@ -8,6 +8,7 @@ define(function (require, exports, module) {
     View                          = require('js/Views/Widgets'),
     Config                        = require('js/Config'),
     BatchUpdate                   = require('js/Views/WidgetsUpdate'),
+    CloneWidgets                  = require('js/Views/CloneWidgets'),
     _                             = require('underscore')
   ;
 
@@ -29,6 +30,10 @@ define(function (require, exports, module) {
       wgts.addContainer($wrapper[0]);
       
       wgts.batchUpdate = new BatchUpdate({el : $('#wrap_WidgetsBatchUpdate')[0]});
+
+      if ($('#wrap_Inputfield_widgets_clone_template').length) {
+        wgts.cloner = new CloneWidgets();
+      }
     },
 
     addContainer : function (el) {

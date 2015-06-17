@@ -23,7 +23,6 @@ define(function (require, exports, module) {
       this._status = status.end;
       this._buttonSizeFixed = false;
       this.attachEvents();
-      this.updateButtonStatus();
       this._disabled = true;
       this.updateButtonStatus();
     },

@@ -55,19 +55,25 @@ define(function (require, exports, module) {
       if (!$target.is(id) && !$target.parents(id).length) return;
       ev.preventDefault();
 
-      function then (data) {
-        $data = $(data);
-        $data.css('display', 'none');
-        this.$widgets.append($data);
-        this._widgets.push(this.initializeWidget($data[0]));
-        $data.slideDown();
-      }
-
       $.get(wgts.config.ajaxUrl + 'Create/', {
         owner : wgts.config.owner,
         ownerType : wgts.config.ownerType,
         parent : this._id
-      }, _.bind(then, this));
+      }, _.bind(this.onDataRecieve, this));
+    },
+
+    onDataRecieve : function (data) {
+      $data = $(data);
+      $data.css('display', 'none');
+      if ($data.length === 1) {
+        this.$widgets.append($data);
+        this._widgets.push(this.initializeWidget($data[0]));
+        $data.slideDown();
+      } else if ($data.length > 1) {
+        _($data).each(function (item) {
+          this.onDataRecieve(item);
+        }, this);
+      }
     },
 
     changeWidgetType : function (widget) {

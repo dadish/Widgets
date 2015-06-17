@@ -105,12 +105,41 @@ class ProcessWidgets extends Process implements Module {
     return $out;
   }
 
-  public function executeCopy()
+  public function executeCloneWidgets()
   {
-    $widgets = json_decode($this->sanitizer->textarea($this->input->widgets), true);
-    $owner = (integer) $this->sanitizer->text($this->input->owner);
-    $ownerType = (integer) $this->sanitizer->text($this->input->ownerType);
-    return json_encode($this->batchCreateNewFrom($widgets, $owner, $ownerType)->getArray());
+    $cloneFrom = (integer) $this->sanitizer->text($this->input->cloneFrom);
+    $cloneTo = (integer) $this->sanitizer->text($this->input->cloneTo);
+    $cloneFrom = $this->templates->get($cloneFrom);
+    $cloneTo = $this->pages->get($cloneTo);
+    $cloneFromWidgets = $cloneFrom->widgets;
+    
+    foreach ($cloneFromWidgets as $cloneWidget) {
+      $this->cloneWidget($cloneWidget, $cloneTo, Widget::ownerTypePage);
+    }
+
+    $out = "";
+    foreach ($cloneTo->widgets->filter('parent=1') as $widget) {
+      $out .= InputfieldWidgets::renderWidget($widget);
+    }
+
+    return $out;
+  }
+
+  protected function cloneWidget(Widget $widget, $newOwner, $newOwnerType)
+  {
+    $breakpoints = $widget->breakpoints();
+    $widget->ownerType = $newOwnerType;
+    $widget->owner = $newOwner;
+    $widget->id = 0;
+    $widget->save();
+
+    foreach ($breakpoints as $brk) {
+      $brk->id = 0;
+      $brk->widget = $widget->id;
+      $brk->save();
+    }
+
+    return $widget;
   }
 
   public function executeDelete()
@@ -243,6 +272,8 @@ class ProcessWidgets extends Process implements Module {
 
   protected function buildWidgetTab($target = null)
   {
+    // Make sure InputfieldTextarea is loaded 
+    // because InputfieldWidget depends on it
     $this->modules->get('InputfieldTextarea');
     $wrapper = new InputfieldWrapper();
     $id = $this->className();
@@ -258,8 +289,18 @@ class ProcessWidgets extends Process implements Module {
     } else {
       throw new WireException("This scenario has not been considered.");
     }
-    foreach ($widgets->filter("parent=1") as $widget) {
-      $widgetsField->add($widget);
+
+    
+    if ($target instanceof Template) {
+      foreach ($widgets->filter("parent=1") as $widget) {
+        $widgetsField->add($widget);
+      }
+
+      // Do not display widgets if page does not own them
+    } else if ($target instanceof Page && $widgets instanceof PageWidgets) {
+      foreach ($widgets->filter("parent=1") as $widget) {
+        $widgetsField->add($widget);
+      }
     }
 
     $wrapper->add($widgetsField);
@@ -293,7 +334,7 @@ class ProcessWidgets extends Process implements Module {
     return $fields;
   }
 
-  public function hookPageWidgetsTab(HookEvent $event)
+  protected function hookPageWidgetsTab(HookEvent $event)
   {
     // Find out what page we are editing
     $id = (int) $this->input->post('id');
@@ -301,17 +342,35 @@ class ProcessWidgets extends Process implements Module {
     $page = $this->pages->get("id=$id");
     $this->jsSettings['owner'] = $page->id;
     $this->jsSettings['ownerType'] = Widget::ownerTypePage;
-    $this->setJsSettings();
 
     $form = $event->arguments[0];
     $processPageEdit = $event->object;
     $widgetsTab = $this->buildWidgetTab($page);
+
+    // If the page's teplate has widgets 
+    // then add option to clone the widgets from template
+    if ($page->template->widgets->count()) {
+      $field = new InputfieldCloneWidgets();
+      $field->name = "widgets_clone_template";
+      $field->label = $this->_('Clone Widgets From Template');
+      $field->attr('value', $this->_('Clone Widgets'));
+
+      $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id;
+      $field->description = sprintf($this->_('This page does not own any widgets. But it\'s template owns widgets that are automatically rendered for pages with that template. Consider modifying the widgets on [Template](%1$s) page. You can also clone all widgets that are owned by templae and modify them to fit your needs for this particular page.'), $templateEditUrl);
+      $widgetsTab->prepend($field);
+
+      $this->jsSettings['cloneFrom'] = $page->template->id;
+      $this->jsSettings['cloneTo'] = $page->id;
+    }
+
     $processPageEdit->addTab($widgetsTab->attr('id'), $this->_('Widgets'));
     $form->insertBefore($widgetsTab, $form->get('submit_save'));
+
+    $this->setJsSettings();
     $event->return = $form;
   }
 
-  public function hookTemplateWidgetsTab(HookEvent $event)
+  protected function hookTemplateWidgetsTab(HookEvent $event)
   {
     $template = $event->arguments[0];
     $form = $event->return;
@@ -332,6 +391,7 @@ class ProcessWidgets extends Process implements Module {
     require_once(__DIR__ . "/Inputfields/InputfieldWidgetSettings.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidget.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidgets.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldCloneWidgets.php");
     require_once(__DIR__ . "/Inputfields/InputfieldBreakpoints.php");
   }
 }
