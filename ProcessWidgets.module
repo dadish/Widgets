@@ -355,7 +355,7 @@ class ProcessWidgets extends Process implements Module {
       $field->label = $this->_('Clone Widgets From Template');
       $field->attr('value', $this->_('Clone Widgets'));
 
-      $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id;
+      $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id . '#' . $this->className();
       $field->description = sprintf($this->_('This page does not own any widgets. But it\'s template owns widgets that are automatically rendered for pages with that template. Consider modifying the widgets on [Template](%1$s) page. You can also clone all widgets that are owned by templae and modify them to fit your needs for this particular page.'), $templateEditUrl);
       $widgetsTab->prepend($field);
 
