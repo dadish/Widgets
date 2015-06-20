@@ -30,7 +30,8 @@ class Breakpoint extends WireData {
     if (is_null($this->widget)) return '';
     $out = "";
     $id = $this->widget;
-    $width = $this->span[0] / $this->span[1] * 100;
+    $width = (string) ((int) $this->span[0] / (int) $this->span[1] * 100);
+    $width = str_replace(',', '.', $width);
 
     // If this breakpoint is not default 
     // then wrap it in a css @media with provided settings
