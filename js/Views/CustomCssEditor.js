@@ -4,7 +4,7 @@ define(function (require, exports, module) {
   
   var
     Backbone                      = require('backbone'),
-    Magnific                      = require('magnific-popup')
+    Magnific                      = require('magnificPopup')
   ;
 
   module.exports = Backbone.View.extend({

@@ -27,20 +27,19 @@ class ProcessWidgets extends Process implements Module {
 
   public function init()
   {
+    // make sure neccessary assets are loaded
+    $this->modules->get('JqueryCore');
+    $this->modules->get('JqueryUI');
+    $this->modules->get('JqueryMagnific');
+
     parent::init();
     $this->requireHelperClasses();
     $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookPageWidgetsTab');
     $this->addHookAfter('ProcessTemplate::buildEditForm', $this, 'hookTemplateWidgetsTab');
     $this->widgets = $this->modules->get('Widgets');
     $this->breakpoints = $this->modules->get('Breakpoints');
-
-    $this->jsSettings['updateInterval'] = 5000;
+    
     $this->jsSettings['notify'] = ($this->modules->has('SystemNotifications')) ? true : false;
-
-    // make sure neccessary assets are loaded
-    $this->modules->get('JqueryCore');
-    $this->modules->get('JqueryUI');
-    $this->modules->get('JqueryMagnific');
   }
 
   protected function setJsSettings()

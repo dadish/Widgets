@@ -1,7 +1,5 @@
 // js/Views/Widgets.js
 
-// TODO implement a widget sorting functionality
-
 define(function (require, exports, module) {
   
   var

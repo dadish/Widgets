@@ -10,7 +10,7 @@ define(function (require, exports, module) {
     Breakpoints                   = require('js/Views/Breakpoints'),
     BreakpointModel               = require('js/Models/Breakpoint'),
     Model                         = require('js/Models/Widget'),
-    Magnific                      = require('magnific-popup')
+    Magnific                      = require('magnificPopup')
   ;
 
   module.exports = Backbone.View.extend({

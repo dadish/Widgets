@@ -4,21 +4,10 @@
 var
 	gulp									=	require('gulp'),
 	watch									=	require('gulp-watch'),
-	sass									= require('gulp-sass'),
 	jshint								=	require('gulp-jshint'),
 	util									=	require('gulp-util'),
 	through								=	require('through'),
-	rjs										=	require('requirejs'),
-	RevAll								=	require('gulp-rev-all'),
-	del										= require('del'),
-	vinylPaths						=	require('vinyl-paths'),
-	glob									=	require('glob'),
-	runSequence						=	require('run-sequence'),
-	Vinyl									=	require('vinyl'),
-	ternaryStream					=	require('ternary-stream'),
-	ReadableStream				=	require('readable-stream')
-	fs										=	require('fs'),
-	_											=	require('underscore')
+	rjs										=	require('requirejs')
 ;
 
 
@@ -51,11 +40,11 @@ function reporter (subject, action, object) {
 }
 
 
-// gulp watch-js
-// =============
+// gulp watch
+// ==========
 // Watches the .js files and reports about the 
 // style. Uses jshint-stylish for reporting
-gulp.task('watch-js', function () {
+gulp.task('watch', function () {
 	var glob;
 	glob = config.js_dir + '/**/*.js';
 	return gulp.src(glob)
@@ -65,59 +54,9 @@ gulp.task('watch-js', function () {
 });
 
 
-// gulp watch
+// gulp build
 // ==========
-// Starts gulp sass and gulp jshint
-// Useful for development mode
-gulp.task('watch', function () {
-	//gulp.start('watch-sass');
-	gulp.start('watch-js');
-});
-
-
-// gulp build-js
-// =============
-// Starts with config.build_js and follows CommonJS
-// syntax  paths (e.g. require('string')). Concatenates
-// and compresses all found files.
-gulp.task('build-js', function (cb) {
-	var options;
-	options = {	
-		baseUrl : __dirname,
-		mainConfigFile : config.js_build + '.js',
-		optimize : 'none',
-		preserveLicenseComments: true,
-		findNestedDependencies: true,	
-		name : config.js_almond,
-		include : config.js_build,
-		insertRequire : [config.js_build],
-		out : config.build_dir + '/' + config.build_prefix + '.js',
-		wrap: {
-			start: "(function() {",
-			end: "})();"
-		}
-	};
-	rjs.optimize(options, function (res) {
-		var msg;
-		res = res.split('\n');
-		res.forEach(function (str, index) {
-			msg = ' require: ';
-			if (index === 0 || index === res.length - 1) return;
-			if (index === 1) msg = ' building: ';
-			if (index === 2) msg = ' start ';
-			reporter('RJS', msg, str);
-		});
-		cb(); // finish
-	});
-});
-
-
-// gulp build-js-rev
-// =================
-// Appends a unique hash for build/*.js
-// Ultimately this method creates a copy of the file
-// with appended hash and deletes the original file.
-gulp.task('build-js-min', function (cb) {
+gulp.task('build', function (cb) {
 	var options;
 	options = {	
 		baseUrl : __dirname,
@@ -132,7 +71,24 @@ gulp.task('build-js-min', function (cb) {
 		wrap: {
 			start: "(function() {",
 			end: "})();"
-		}
+		},
+    
+    // Exclude ProcessWire modules. Otherwise they are loaded twice
+    // and break everything
+    onBuildRead: function (moduleName, path, contents) {
+    	var key, excludes;
+    	excludes = {
+    		'$' : '/[a-zA-Z./!0-9-]*(Jquery/JqueryCore)[a-zA-Z/.0-9-]*/',
+    		'$.ui' : '/[a-zA-Z./!0-9-]*(Jquery/jqueryUI)[a-zA-Z/.0-9-]*/',
+    		'$.magnificPopup' : '/[a-zA-Z./!0-9-]*(Jquery/JqueryMagnific)[a-zA-Z/.0-9-]*/'
+    	};
+      for (key in excludes) {
+      	if (path.match(excludes[key])) {
+      		return "define(function (require, exports, module) { module.exports = "+ key +";});";
+      	}
+      }
+      return contents;
+    }
 	};
 	rjs.optimize(options, function (res) {
 		var msg;
@@ -146,31 +102,4 @@ gulp.task('build-js-min', function (cb) {
 		});
 		cb(); // finish
 	});
-});
-
-
-
-// gulp dev
-// ========
-// Set everything for develpment environment
-gulp.task('dev', function (cb) {
-	function then() {
-		util.log(util.green('Ready for development!'));
-	}
-
-	runSequence(
-		'build-js',
-		cb
-		);
-});
-
-
-// gulp build
-// ==========
-// Set everything for production environment
-gulp.task('build', function (cb) {
-	runSequence(
-		'build-js-min',
-		cb
-		);
 });
