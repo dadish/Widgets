@@ -13,7 +13,8 @@ define(function (require, exports, module) {
       progress : 'progress',
       end : 'end',
       changed : 'changed',
-      unchanged : 'unchanged'
+      unchanged : 'unchanged',
+      ready : 'ready'
     }
 
   });

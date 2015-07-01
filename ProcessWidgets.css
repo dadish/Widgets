@@ -91,3 +91,7 @@
 #wrap_Inputfield_widgets_clone_template input{
   display : none;
 }
+
+.InputfieldWidgetLink .message{
+  display : none;
+}

@@ -9,15 +9,21 @@ define(function (require, exports, module) {
     Backbone                      = require('backbone'),
     Breakpoints                   = require('js/Views/Breakpoints'),
     BreakpointModel               = require('js/Models/Breakpoint'),
+    ChangeParent                  = require('js/Views/WidgetChangeParent'),
     Model                         = require('js/Models/Widget'),
-    Magnific                      = require('magnificPopup')
+    Magnific                      = require('magnificPopup'),
+    Config                        = require('js/Config')
+  ;
+
+  var
+    status = Config.status
   ;
 
   module.exports = Backbone.View.extend({
 
     events : {
       'click .InputfieldWidgetDelete' : 'remove',
-      'change [name="InputfieldType"]' : 'changeType'
+      'change [name="widgetType"]' : 'changeType'
     },
 
     initialize : function (options) {
@@ -31,20 +37,30 @@ define(function (require, exports, module) {
       this.breakpoints = new Breakpoints({
         model : this.model,
         collection : this.model.get('breakpoints'),
-        el : this.$('.InputfieldContent .Inputfields .InputfieldBreakpoints')[0]
+        el : this.$('#wrap_InputfieldBreakpoints_' + this.model.id)[0]
       });
 
       this.$spinner = $('<i class="fa fa-lg fa-spin fa-spinner"></i>');
 
       // If we have a li.InputfieldWidgets element then initiate it as a Widgets
       // View and add it to wgts.containers.
-      subContainer = this.$('.InputfieldWidgets');
+      subContainer = this.$('#wrap_Inputfield_widgets_' + this.model.id);
       if (subContainer.length) {
         wgts.addContainer(subContainer[0]);
       }
 
+      this.changeParent = new ChangeParent({
+        el : this.$('#wrap_changeParent_' + this.model.id), 
+        model : this.model,
+        _parent : this
+      });
+
+      this.attachEvents();
+    },
+
+    attachEvents : function () {
       // Bind magnific popup for widget settings
-      this.$('.InputfieldWidgetSettings .InputfieldContent a').magnificPopup({
+      this.$('#widgetSettings_' + this.model.id).magnificPopup({
         type : 'iframe'
       });
     },
@@ -81,7 +97,7 @@ define(function (require, exports, module) {
     changeType : function (ev) {
       var $target;
       $target = $(ev.target);
-      if (!$target.is('#InputfieldType_' + this.model.id)) return;
+      if (!$target.is('#widgetType_' + this.model.id)) return;
       this.model.set('className', $(ev.target).val());
       wgts.events.trigger('widget:changeType', this);
       this.startSpinning();

@@ -14,6 +14,9 @@ define(function (require, exports, module) {
 
   module.exports = {
 
+    // The widget that is going to change it's parent
+    _changeParentWidget : null,
+
     events : _.extend({}, Backbone.Events),
   
     launch : function () {

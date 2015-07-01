@@ -44,6 +44,7 @@ class ProcessWidgets extends Process implements Module {
 
   protected function setJsSettings()
   {
+    $this->jsSettings['changeParentDestinationText'] = sprintf($this->_('%1$s Put Here %1$s'), InputfieldWidget::asterisk);
     $this->config->js($this->className(), $this->jsSettings);
   }
 
@@ -387,7 +388,7 @@ class ProcessWidgets extends Process implements Module {
 
   protected function requireHelperClasses()
   {
-    require_once(__DIR__ . "/Inputfields/InputfieldWidgetSettings.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldWidgetLink.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidget.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidgets.php");
     require_once(__DIR__ . "/Inputfields/InputfieldCloneWidgets.php");
