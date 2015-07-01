@@ -10,7 +10,7 @@ requirejs.config({
 		'requirejs' : 'deps/requirejs/require',
 		'text' : 'deps/requirejs-text/text',
 		'jquery' : '../../../wire/modules/Jquery/JqueryCore/jquery-1.11.1',
-		'jqueryUI' : '../../../wire/modules/Jquery/jqueryUI/jqueryUI',
+		'jqueryUI' : '../../../wire/modules/Jquery/JqueryUI/jqueryUI',
 		'underscore' : 'deps/underscore/underscore',
 		'backbone' : 'deps/backbone/backbone',
 		'magnificPopup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific',
