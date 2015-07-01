@@ -12,7 +12,8 @@ define(function (require, exports, module) {
     ChangeParent                  = require('js/Views/WidgetChangeParent'),
     Model                         = require('js/Models/Widget'),
     Magnific                      = require('magnificPopup'),
-    Config                        = require('js/Config')
+    Config                        = require('js/Config'),
+    _                             = require('underscore')
   ;
 
   var
@@ -42,6 +43,8 @@ define(function (require, exports, module) {
 
       this.$spinner = $('<i class="fa fa-lg fa-spin fa-spinner"></i>');
 
+      this.$labelMeta = this.$('.InputfieldWidgetHeader .InputfieldWidgetHeaderMeta');
+
       // If we have a li.InputfieldWidgets element then initiate it as a Widgets
       // View and add it to wgts.containers.
       subContainer = this.$('#wrap_Inputfield_widgets_' + this.model.id);
@@ -61,7 +64,10 @@ define(function (require, exports, module) {
     attachEvents : function () {
       // Bind magnific popup for widget settings
       this.$('#widgetSettings_' + this.model.id).magnificPopup({
-        type : 'iframe'
+        type : 'iframe',
+        callbacks : {
+          close : _.bind(this.updateLabelMeta, this)   
+        }
       });
     },
 
@@ -109,6 +115,17 @@ define(function (require, exports, module) {
 
     stopSpinning : function () {
       this.$spinner.remove();
+    },
+
+    updateLabelMeta : function () {
+      
+      function then (data) {
+        this.$labelMeta.empty().append(data);
+      }
+
+      $.get(wgts.config.ajaxUrl + 'LabelMeta/', {
+        widgetId : this.model.id
+      }, _.bind(then, this));
     }
   });
 

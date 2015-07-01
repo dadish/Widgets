@@ -78,8 +78,9 @@ class InputfieldWidget extends InputfieldTextarea {
 
     $label = "<span class='InputfieldWidgetDragZone'>";
     $label .= wireIconMarkup('cube'); 
-    $label .= " <span class='InputfieldWidgetHeaderText'>". __('Widget', __FILE__) . "</span>";
+    $label .= " <span class='InputfieldWidgetHeaderText'>". $this->widget->className() . "</span>";
     $label .= " <span class='InputfieldWidgetHeaderId'>id: ". $this->widget->id ."</span>";
+    $label .= " <span class='InputfieldWidgetHeaderMeta'>". $this->widget->getLabelMeta() ."</span>";
     $label .= "</span>";
     $this->label = $label;
     $arr = $this->widget->getArray();

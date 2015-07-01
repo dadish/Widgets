@@ -15,6 +15,11 @@
   margin-left: 1rem;
 }
 
+.InputfieldWidgetHeader .InputfieldWidgetHeaderMeta{
+  color: #777;
+  font-weight: normal;
+}
+
 .InputfieldWidgetsItem{
   margin-bottom : 1rem;
 }

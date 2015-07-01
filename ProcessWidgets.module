@@ -245,6 +245,13 @@ class ProcessWidgets extends Process implements Module {
     return $form->render();
   }
 
+  public function executeLabelMeta()
+  {
+    $id = (integer) $this->sanitizer->text($this->input->widgetId);
+    $widget = $this->widgets->get($id);
+    return $widget->getLabelMeta();
+  }
+
   public function executeCreateBreakpoint()
   {
     $widgetId = (integer) $this->sanitizer->text($this->input->widgetId);

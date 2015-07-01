@@ -144,7 +144,7 @@ define(function (require, exports, module) {
     },
 
     onChangeParent : function (widget) {
-      if (this.isChild(widget)) return;
+      if (this.isChild(widget) || this._id === widget.model.id) return;
       this.$addLink.empty().append(wgts.config.changeParentDestinationText);
     },
 
