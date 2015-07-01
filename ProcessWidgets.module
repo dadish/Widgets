@@ -11,7 +11,7 @@ class ProcessWidgets extends Process implements Module {
   public static function getModuleInfo() {
     return array(
       'title' => 'Process Widgets',        // printable name/title of module
-      'version' => 001,       // version number of module
+      'version' => 002,       // version number of module
       'summary' => _('Helps to manage widgets.'),      // one sentence summary of module
       'icon' => 'cubes',
       'requires' => array('Widgets', 'WidgetContainer', 'JqueryCore', 'JqueryUI', 'JqueryMagnific'),
