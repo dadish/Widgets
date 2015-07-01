@@ -33,7 +33,7 @@ class Widgets extends WidgetArray implements Module {
   public static function getModuleInfo() {
     return array(
       'title' => 'Widgets', 
-      'version' => 004, 
+      'version' => 005, 
       'summary' => __('Helps to build responsive websites with ease.'),
       'singular' => true, 
       'autoload' => true,
