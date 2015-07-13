@@ -52,7 +52,7 @@ class InputfieldWidget extends InputfieldTextarea {
     $field->label = $this->_('Change Parent');
     $field->attr('data-change-str', $field->label);
     $field->attr('data-unchange-str', $this->_('Cancel'));
-    $field->message = sprintf($this->_('Choose the place where you want to move this widget. The allowed places is indicated as %1$s Put Here %1$s'), '<a class="changeParentIndicator">' . self::asterisk, self::asterisk . '</a>');
+    $field->message = sprintf($this->_('Choose the place where you want to move this widget. The allowed places is indicated as %1$s Put Here %2$s'), "<a class='changeParentIndicator'>" . self::asterisk, self::asterisk . "</a>");
     $field->columnWidth = 40;
     $wrap->add($field);
 
