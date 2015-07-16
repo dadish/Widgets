@@ -366,7 +366,7 @@ class Widget extends WireData{
     $field->name = "class";
     $field->label = $this->_('Class');
     $field->description = $this->_("Additional custom html classes that you would like to add to your widget. \n This widget will get `" . $this->className() . "` class by default.");
-    $field->attr('value', str_replace($this->className(), '', $this->class));
+    $field->attr('value', $this->class);
     $field->collapsed = Inputfield::collapsedBlank;
     $fields->add($field);
     
