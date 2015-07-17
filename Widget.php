@@ -4,12 +4,10 @@
  * 
  * @property int $owner The page or template that this widget is assigned to.
  * @property int $ownerType The type of the owner. It can be either a Page or a Template.
- * @property string $renderPages The pages that are rendered by this widget. The widget will end up using data from these pages to build it's markup
+ * @property PageArray $renderPages The pages that are rendered by this widget. The widget will end up using data from these pages to build it's markup
  * @property int $parent Parent widget. Default = 0;
  * @property string $class Class/es that will be rendered with the XHTML output.
  *
- * @todo add a sort method for renderPages
- * @todo add a sort method for childWidgets
  * @todo look for ProcessModules on how to handle widget settings properly
  */
 
@@ -349,9 +347,11 @@ class Widget extends WireData{
     $this->modules->get('JqueryUI');
     $fields = new InputfieldWrapper();
 
-    if ($multipleRenders) $field = $this->modules->get('InputfieldPageListSelectMultiple');
-    else $field = $this->modules->get('InputfieldPageListSelect');
+    if ($multipleRenders) $inputfield = 'InputfieldPageListSelectMultiple';
+    else $inputfield = 'InputfieldPageListSelect';
 
+    $field = $this->modules->get('InputfieldPage');
+    $field->inputfield = $inputfield;
     $field->name = "renderPages";
 
     if ($multipleRenders) $field->label = $this->_('Render Pages');
@@ -359,7 +359,6 @@ class Widget extends WireData{
     
     if ($multipleRenders) $field->description = $this->_('Pages that will be rendered by this widget.');
     else $field->description = $this->_('Page that will be rendered by this widget.');
-    
     $field->attr('value', (string) $this->renderPages);
     $fields->add($field);
 
@@ -367,7 +366,7 @@ class Widget extends WireData{
     $field->name = "class";
     $field->label = $this->_('Class');
     $field->description = $this->_("Additional custom html classes that you would like to add to your widget. \n This widget will get `" . $this->className() . "` class by default.");
-    $field->attr('value', str_replace($this->className(), '', $this->class));
+    $field->attr('value', $this->class);
     $field->collapsed = Inputfield::collapsedBlank;
     $fields->add($field);
     
@@ -410,6 +409,14 @@ class Widget extends WireData{
   {
     if (!$this->isNew()) return (string) $this->id;
     return parent::__toString();
+  }
+
+  public function getLabelMeta()
+  {
+    $label = "";
+    if ($this->renderPages->count()) $label .= " \"" . $this->renderPages->first()->title . "\"";
+    if ($this->renderPages->count() > 1) $label .= " and " . ($this->renderPages->count() - 1) . "more...";
+    return $label;
   }
 
   public function setTrackChanges($trackChanges = true)

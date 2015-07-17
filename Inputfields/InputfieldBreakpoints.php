@@ -48,9 +48,9 @@ class InputfieldBreakpoints extends InputfieldTextarea {
       }
       
       // Span
-      $span = "<input class='breakpointSpan breakpointSpanNumerator' type='text' size='2' value='". $brk['data']['span'][0] ."'>"; 
+      $span = "<input class='breakpointSpan breakpointSpanNumerator' type='text' size='3' value='". $brk['data']['span'][0] ."'>"; 
       $span .= " of "; 
-      $span .= "<input class='breakpointSpan breakpointSpanDenominator' type='text' size='2' value='". $brk['data']['span'][1] ."'>";
+      $span .= "<input class='breakpointSpan breakpointSpanDenominator' type='text' size='3' value='". $brk['data']['span'][1] ."'>";
       $arr[] = $span;
 
       // Clear

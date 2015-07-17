@@ -11,7 +11,7 @@ class ProcessWidgets extends Process implements Module {
   public static function getModuleInfo() {
     return array(
       'title' => 'Process Widgets',        // printable name/title of module
-      'version' => 001,       // version number of module
+      'version' => 005,       // version number of module
       'summary' => _('Helps to manage widgets.'),      // one sentence summary of module
       'icon' => 'cubes',
       'requires' => array('Widgets', 'WidgetContainer', 'JqueryCore', 'JqueryUI', 'JqueryMagnific'),
@@ -27,24 +27,24 @@ class ProcessWidgets extends Process implements Module {
 
   public function init()
   {
+    // make sure neccessary assets are loaded
+    $this->modules->get('JqueryCore');
+    $this->modules->get('JqueryUI');
+    $this->modules->get('JqueryMagnific');
+
     parent::init();
     $this->requireHelperClasses();
     $this->addHookAfter('ProcessPageEdit::buildForm', $this, 'hookPageWidgetsTab');
     $this->addHookAfter('ProcessTemplate::buildEditForm', $this, 'hookTemplateWidgetsTab');
     $this->widgets = $this->modules->get('Widgets');
     $this->breakpoints = $this->modules->get('Breakpoints');
-
-    $this->jsSettings['updateInterval'] = 5000;
+    
     $this->jsSettings['notify'] = ($this->modules->has('SystemNotifications')) ? true : false;
-
-    // make sure neccessary assets are loaded
-    $this->modules->get('JqueryCore');
-    $this->modules->get('JqueryUI');
-    $this->modules->get('JqueryMagnific');
   }
 
   protected function setJsSettings()
   {
+    $this->jsSettings['changeParentDestinationText'] = sprintf($this->_('%1$s Put Here %1$s'), InputfieldWidget::asterisk);
     $this->config->js($this->className(), $this->jsSettings);
   }
 
@@ -245,6 +245,13 @@ class ProcessWidgets extends Process implements Module {
     return $form->render();
   }
 
+  public function executeLabelMeta()
+  {
+    $id = (integer) $this->sanitizer->text($this->input->widgetId);
+    $widget = $this->widgets->get($id);
+    return $widget->getLabelMeta();
+  }
+
   public function executeCreateBreakpoint()
   {
     $widgetId = (integer) $this->sanitizer->text($this->input->widgetId);
@@ -388,7 +395,7 @@ class ProcessWidgets extends Process implements Module {
 
   protected function requireHelperClasses()
   {
-    require_once(__DIR__ . "/Inputfields/InputfieldWidgetSettings.php");
+    require_once(__DIR__ . "/Inputfields/InputfieldWidgetLink.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidget.php");
     require_once(__DIR__ . "/Inputfields/InputfieldWidgets.php");
     require_once(__DIR__ . "/Inputfields/InputfieldCloneWidgets.php");

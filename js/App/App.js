@@ -14,6 +14,9 @@ define(function (require, exports, module) {
 
   module.exports = {
 
+    // The widget that is going to change it's parent
+    _changeParentWidget : null,
+
     events : _.extend({}, Backbone.Events),
   
     launch : function () {
@@ -27,13 +30,16 @@ define(function (require, exports, module) {
       wgts.widgets = new Widgets();
       wgts.containers = [];
 
-      wgts.addContainer($wrapper[0]);
+      if ($wrapper.length) {
+        wgts.addContainer($wrapper[0]);
+      }
       
       wgts.batchUpdate = new BatchUpdate({el : $('#wrap_WidgetsBatchUpdate')[0]});
 
       if ($('#wrap_Inputfield_widgets_clone_template').length) {
         wgts.cloner = new CloneWidgets();
       }
+      
     },
 
     addContainer : function (el) {

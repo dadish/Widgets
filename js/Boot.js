@@ -10,26 +10,26 @@ requirejs.config({
 		'requirejs' : 'deps/requirejs/require',
 		'text' : 'deps/requirejs-text/text',
 		'jquery' : '../../../wire/modules/Jquery/JqueryCore/jquery-1.11.1',
-		'jquery-ui' : '../../../wire/modules/Jquery/JqueryUI/JqueryUI',
+		'jqueryUI' : '../../../wire/modules/Jquery/JqueryUI/JqueryUI',
 		'underscore' : 'deps/underscore/underscore',
 		'backbone' : 'deps/backbone/backbone',
-		'magnific-popup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific',
-		'asm-select' : '../../../wire/modules/Inputfield/InputfieldAsmSelect/asmselect/jquery.asmselect'
+		'magnificPopup' : '../../../wire/modules/Jquery/JqueryMagnific/JqueryMagnific',
+		'asmSelect' : '../../../wire/modules/Inputfield/InputfieldAsmSelect/asmselect/jquery.asmselect'
 	},
 	shim : {
-		'magnific-popup' : {
+		'magnificPopup' : {
 			deps : ['jquery'],
-			exports : 'magnific-popup'
+			exports : 'magnificPopup'
 		},
 
-		'jquery-ui' : {
+		'jqueryUI' : {
 			deps : ['jquery'],
-			exports : 'jquery-ui'
+			exports : 'jqueryUI'
 		},
 
-		'asm-select' : {
+		'asmSelect' : {
 			deps : ['jquery'],
-			exports : 'asm-select'
+			exports : 'asmSelect'
 		}
 	},
 	waitSeconds : 0
@@ -43,7 +43,7 @@ define(function (require, exports, module) {
 
 	require('js/polyfills');
 	require('jquery');
-	require('jquery-ui');
+	require('jqueryUI');
 	require('underscore');
 	require('backbone');
 
@@ -54,6 +54,8 @@ define(function (require, exports, module) {
 
 	if (Config.stop) return;
 
-	app.launch();
+	setTimeout(function () {
+		app.launch();
+	}, 2000);
 
 });

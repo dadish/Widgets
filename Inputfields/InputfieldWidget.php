@@ -4,6 +4,8 @@ class InputfieldWidget extends InputfieldTextarea {
 
   protected $widget = null;
 
+  const asterisk = '<i class="fa fa-asterisk fa-spin"></i>';
+
   public function __construct($widget = null)
   {
     parent::__construct();
@@ -20,11 +22,11 @@ class InputfieldWidget extends InputfieldTextarea {
 
     // WidgetType
     $field = $this->modules->get('InputfieldSelect');
-    $field->name = 'InputfieldType';
+    $field->name = 'widgetType';
     $field->label = $this->_('Widget Type');
-    $field->attr('id', 'InputfieldType_' . $this->widget->id);
+    $field->attr('id', 'widgetType_' . $this->widget->id);
     $field->required = true;
-    $field->columnWidth = 50;
+    $field->columnWidth = 30;
     $widgetTypes = array();
     foreach ($this->modules->findByPrefix('Widget') as $module) {
       $title = $module::getModuleInfo()['title'];
@@ -36,11 +38,22 @@ class InputfieldWidget extends InputfieldTextarea {
     $wrap->add($field);
 
     // Settings button
-    $field = new InputfieldWidgetSettings();
+    $field = new InputfieldWidgetLink();
     $field->setWidget($this->widget);
-    $field->name = 'InputfieldSettings';
+    $field->name = 'widgetSettings';
+    $field->attr('href', $this->config->urls->admin . 'setup/widgets/Settings/?modal=1&id=' . $this->widget->id);
     $field->label = $this->_('Settings');
-    $field->columnWidth = 50;
+    $field->columnWidth = 30;
+    $wrap->add($field);
+
+    $field = new InputfieldWidgetLink();
+    $field->setWidget($this->widget);
+    $field->name = 'changeParent';
+    $field->label = $this->_('Change Parent');
+    $field->attr('data-change-str', $field->label);
+    $field->attr('data-unchange-str', $this->_('Cancel'));
+    $field->message = sprintf($this->_('Choose the place where you want to move this widget. The allowed places is indicated as %1$s Put Here %2$s'), "<a class='changeParentIndicator'>" . self::asterisk, self::asterisk . "</a>");
+    $field->columnWidth = 40;
     $wrap->add($field);
 
     // Prepare breakpoints
@@ -56,12 +69,6 @@ class InputfieldWidget extends InputfieldTextarea {
       $wrap->add($container);
     }
 
-//    // UpdateButton
-//    $button = $this->modules->get('InputfieldButton');
-//    $button->attr('id', 'InputfieldUpdate_' . $this->widget->id);
-//    $button->attr('value', $this->_('Update'));   
-//    $wrap->add($button);
-
     return parent::___render() . $wrap->render();
   }
 
@@ -71,8 +78,9 @@ class InputfieldWidget extends InputfieldTextarea {
 
     $label = "<span class='InputfieldWidgetDragZone'>";
     $label .= wireIconMarkup('cube'); 
-    $label .= " <span class='InputfieldWidgetHeaderText'>". __('Widget', __FILE__) . "</span>";
+    $label .= " <span class='InputfieldWidgetHeaderText'>". $this->widget->className() . "</span>";
     $label .= " <span class='InputfieldWidgetHeaderId'>id: ". $this->widget->id ."</span>";
+    $label .= " <span class='InputfieldWidgetHeaderMeta'>". $this->widget->getLabelMeta() ."</span>";
     $label .= "</span>";
     $this->label = $label;
     $arr = $this->widget->getArray();
