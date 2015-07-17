@@ -58,6 +58,8 @@ class Widgets extends WidgetArray implements Module {
   public function init() {
     $this->addHookProperty('Page::widgets', $this, 'pageWidgets');
     $this->addHookProperty('Template::widgets', $this, 'templateWidgets');
+    $this->addHook('Page::hasWidgets', $this, 'pageHasWidgets');
+    $this->addHook('Template::hasWidgets', $this, 'templateHasWidgets');
 
     // Initiate default parent widget
     $parent = $this->makeBlankItem();
@@ -113,6 +115,16 @@ class Widgets extends WidgetArray implements Module {
     // Set templateWidgets to the template before returning
     $template->setQuietly('templateWidgets', $templateWidgets);
     $event->return = $templateWidgets;
+  }
+
+  public function pageHasWidgets(HookEvent $event)
+  {
+    $event->return = (boolean) $this->fetchCountForOwner($event->object->id, Widget::ownerTypePage);
+  }
+
+  public function templateHasWidgets(HookEvent $event)
+  {
+    $event->return = (boolean) $this->fetchCountForOwner($event->object->id, Widget::ownerTypeTemplate);
   }
 
   public function save(Widget $widget)
@@ -215,6 +227,21 @@ class Widgets extends WidgetArray implements Module {
     }
     // if there is no widgets then return empty array of widgets
     return new WidgetArray();
+  }
+
+  protected function fetchCountForOwner($owner, $ownerType)
+  {
+    $owner = (integer) $owner;
+    $ownerType = (integer) $ownerType;
+    $table = self::dbTableName;
+
+    $sql = "SELECT SQL_CALC_FOUND_ROWS id FROM $table WHERE owner = $owner AND ownerType = $ownerType";
+    $stmt = $this->database->prepare($sql);
+    $stmt->execute();
+    $ids = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+    $total = $this->database->prepare("SELECT FOUND_ROWS()");
+    $total->execute();
+    return $total->fetch()[0];
   }
 
   public function get($key)
