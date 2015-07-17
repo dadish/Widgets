@@ -1,0 +1,28 @@
+<?php
+
+class ProcessWidgetsLabels extends Process implements Module {
+  
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Process Widgets Labels',        // printable name/title of module
+      'version' => 001,       // version number of module
+      'summary' => _('Labels Pages and Templates with widgets icon if they have widgets assigned directly.'),      // one sentence summary of module
+      'icon' => 'cubes',
+      'requires' => array('Widgets'),
+      'autoload' => 'process=ProcessPageList|ProcessPageEdit|ProcessTemplate'
+      );
+  }
+
+  public function init()
+  {
+    parent::init();
+    $this->addHookAfter('ProcessPageListRender::getPageLabel', $this, 'hookPageListLabel');
+  }
+
+  protected function hookPageListLabel(HookEvent $event)
+  {
+    $page = $event->arguments[0];
+    if ($page->hasWidgets()) $event->return .= "<span class='ProcessWidgetsLabelsIcon'>" . wireIconMarkup('cubes') . "</span>";
+  }
+
+}
