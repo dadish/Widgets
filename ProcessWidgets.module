@@ -113,7 +113,7 @@ class ProcessWidgets extends Process implements Module {
     $cloneTo = $this->pages->get($cloneTo);
     $cloneFromWidgets = $cloneFrom->widgets;
     
-    foreach ($cloneFromWidgets as $cloneWidget) {
+    foreach ($cloneFromWidgets->filter('parent=1') as $cloneWidget) {
       $this->cloneWidget($cloneWidget, $cloneTo, Widget::ownerTypePage);
     }
 
@@ -125,13 +125,18 @@ class ProcessWidgets extends Process implements Module {
     return $out;
   }
 
-  protected function cloneWidget(Widget $widget, $newOwner, $newOwnerType)
+  protected function cloneWidget(Widget $widget, $newOwner, $newOwnerType, $parentWidget = 1)
   {
     $breakpoints = $widget->breakpoints();
     $widget->ownerType = $newOwnerType;
     $widget->owner = $newOwner;
     $widget->id = 0;
+    $widget->parent = $parentWidget;
     $widget->save();
+
+    foreach ($widget->children() as $childWidget) {
+      $this->cloneWidget($childWidget, $newOwner, $newOwnerType, $widget->id);
+    }
 
     foreach ($breakpoints as $brk) {
       $brk->id = 0;
