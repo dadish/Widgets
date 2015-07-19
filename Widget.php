@@ -331,7 +331,7 @@ class Widget extends WireData{
     return $this->config->paths->$className . "markups/";
   }
 
-  protected function getTemplateFile()
+  public function ___getTemplateFile()
   {
     $templateName = ($this->ownerType == self::ownerTypeTemplate) ? $this->owner->name : $this->owner->template->name;
     $file = $this->getMarkupsPath() . "$templateName.php";

@@ -1,0 +1,161 @@
+<?php
+
+/**
+ * WidgetReference - References to other widgets owner.
+ *
+ *
+ */
+
+class WidgetReference extends Widget implements Module {
+
+  protected $reference = null;
+
+  /**
+   * getModuleInfo is a module required by all modules to tell ProcessWire about them
+   *
+   * @return array
+   *
+   */
+  public static function getModuleInfo() {
+    return array(
+      'title' => 'Widget Reference', 
+      'version' => 001, 
+      'summary' => _('References to other widgets owner. So you do not have to recreate widget copies for every template.'),
+      'icon' => 'cubes',
+      'requires' => array('Widgets')
+      );
+  }
+
+  public function init()
+  {
+    $this->addHookAfter('Widget::getTemplateFile', $this, 'hookGetTemplateFile');
+  }
+
+  protected function hookGetTemplateFile(HookEvent $event)
+  {
+    $widget = $event->object;
+    if ($widget->owner->id != $this->getReference()->id) return;
+
+    $owner = $widget->owner;
+    $widget->owner = $this->owner;
+    $templateFile = $widget->___getTemplateFile();
+    $widget->owner = $owner;
+    $event->return = $templateFile;
+  }
+
+  public static function getDefaultSettings()
+  {
+    return array(
+      'owner' => null,
+      'ownerType' => Widget::ownerTypeTemplate
+      );
+  }
+
+  protected function getOwnerTypeOptions()
+  {
+    $arr = array();
+    $arr[Widget::ownerTypePage] = 'Page';
+    $arr[Widget::ownerTypeTemplate] = 'Template';
+    return $arr;
+  }
+
+  protected function getTemplatesOptions()
+  {
+    $arr = array();
+    foreach (wire('templates') as $template) $arr[$template->id] = $template->name;
+    return $arr;
+  }
+
+  public function setArray(array $arr)
+  {
+    parent::setArray($arr);
+    $settings = array_merge(self::getDefaultSettings(), $this->settings->getArray());
+    $this->settings->setArray($settings);
+  }
+
+  public function getSettingsFields($multipleRenders = false)
+  {
+    $fields = parent::getSettingsFields($multipleRenders);
+
+    $field = $fields->get('renderPages');
+    $field->collapsed = Inputfield::collapsedHidden;
+
+    $field = $this->modules->get('InputfieldSelect');
+    $field->name = 'ownerType';
+    $field->label = $this->_('Owner Type');
+    $field->description = $this->_('Choose if the widget will point to `template` or a `page`.');
+    $field->attr('value', $this->settings->ownerType);
+    $field->addOptions($this->getOwnerTypeOptions());
+    $field->required = true;
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldSelect');
+    $field->name = 'ownerTypeTemplate';
+    $field->label = $this->_('Widgets Owner');
+    $field->description = $this->_('The `template` that you want to refer to.');
+    $field->attr('value', $this->settings->ownerTypeTemplate);
+    $field->addOptions($this->getTemplatesOptions());
+    $field->showIf = "ownerType=" . Widget::ownerTypeTemplate;
+    $fields->add($field);
+
+    $field = $this->modules->get('InputfieldPageListSelect');
+    $field->name = 'ownerTypePage';
+    $field->label = $this->_('Widgets Owner');
+    $field->description = $this->_('The `page` that you want to refer to.');
+    $field->attr('value', $this->settings->ownerTypePage);
+    $field->showIf = "ownerType=" . Widget::ownerTypePage;
+
+    $fields->add($field);
+
+    return $fields;
+  }
+
+  public function processSettingsFields(InputfieldWrapper $settings)
+  {
+    parent::processSettingsFields($settings);
+
+    $this->settings->ownerType = $settings->get('ownerType')->value;
+    $this->settings->ownerTypePage = $settings->get('ownerTypePage')->value;
+    $this->settings->ownerTypeTemplate = $settings->get('ownerTypeTemplate')->value;
+  }
+
+  protected function getReference()
+  {
+    if (is_null($this->reference)) {
+      if ((integer) $this->settings->ownerType === Widget::ownerTypePage) {
+        $owner = $this->settings->ownerTypePage;
+        if (is_null($owner)) return null;
+        $this->reference = $this->pages->get("id=$owner");
+      } else {
+        $owner = $this->settings->ownerTypeTemplate;
+        if (is_null($owner)) return null;
+        $this->reference = wire('templates')->find("id=$owner")->first();
+      }
+    }
+    return $this->reference;
+  }
+
+  public function getLabelMeta()
+  {
+    $label = "";
+    $reference = $this->getReference();
+    if (is_null($reference)) return "Empty";
+    if ($reference instanceof Page)
+    {
+      $label .= "References `page` $reference->title ($reference->id).";
+    } else {
+      $label .= "References `$reference->name` template.";
+    }
+    return $label;
+  }
+
+  public function render()
+  {
+    return $this->getReference()->widgets->render();
+  }
+
+  public function css()
+  {
+    return $this->getReference()->widgets->assets('css');
+  }
+}
