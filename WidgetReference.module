@@ -62,7 +62,9 @@ class WidgetReference extends Widget implements Module {
   protected function getTemplatesOptions()
   {
     $arr = array();
-    foreach (wire('templates') as $template) $arr[$template->id] = $template->name;
+    foreach (wire('templates') as $template) {
+      if ($template->hasWidgets()) $arr[$template->id] = $template->name;
+    }
     return $arr;
   }
 
