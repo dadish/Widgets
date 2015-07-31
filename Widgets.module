@@ -339,4 +339,15 @@ class Widgets extends WidgetArray implements Module {
   public function ___uninstall() {
     $this->database->query("DROP TABLE " . self::dbTableName); 
   }
+
+  /**
+   * 
+   * WidgetsArray overwrites this one. But we need to bring it back so it is compatible
+   * with processwires core Wire class
+   * 
+   */
+  public function __toString()
+  {
+    return $this->className();
+  }
 }

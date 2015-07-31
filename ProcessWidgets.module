@@ -50,7 +50,7 @@ class ProcessWidgets extends Process implements Module {
 
   public function execute()
   {
-    return '';
+    return $this->_('Not intended for direct use. Usually with sub urls.');
   }
 
   public function executeCreate()
