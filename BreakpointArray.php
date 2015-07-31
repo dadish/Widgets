@@ -25,16 +25,12 @@ class BreakpointArray extends WireArray {
     return $arr;
   }
 
-  protected function getString()
+  public function getString()
   {
     $out = "";
     $prefix = $this->modules->get('Widgets')->prefix;
     foreach ($this as $brk) $out .= $brk->getString($prefix);
     return $out;
-  }
-
-  public function __toString() {
-    return $this->getString();
   }
 
   public function __debugInfo()

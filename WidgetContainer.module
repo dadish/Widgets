@@ -124,7 +124,7 @@ class WidgetContainer extends Widget implements Module {
     }
 
     $out = '';
-    $out .= $this->breakpoints();
+    $out .= $this->breakpoints()->getString();
     foreach ($this->children() as $child) {
       $out .= $child->breakpointsCss();
     }

@@ -237,7 +237,7 @@ class Widget extends WireData{
 
   public function breakpointsCss()
   {
-    return (string) $this->breakpoints();
+    return $this->breakpoints()->getString();
   }
 
   public function getArray($withBreakpoints = true)
