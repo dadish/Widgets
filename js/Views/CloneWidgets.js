@@ -26,6 +26,7 @@ define(function (require, exports, module) {
       this._buttonSizeFixed = false;
       this._disabled = false;
       this.attachEvents();
+      this.onWidgetsChange();
     },
 
     attachEvents : function () {
@@ -63,10 +64,29 @@ define(function (require, exports, module) {
       this.startSpinning();
 
       $.get(wgts.config.ajaxUrl + 'CloneWidgets/', {
-        cloneFrom : wgts.config.cloneFrom,
-        cloneTo : wgts.config.cloneTo
+        cloneFrom : this.getCloneFrom(),
+        cloneTo : this.getCloneTo(),
+        cloneToType : this.getCloneToType()
       }, _.bind(this.onDataRecieve, this));
 
+    },
+
+    getCloneFrom : function () {
+      var $target;
+      $target = this.$('#widgets_clone_template_from');
+      return parseInt($target.val(), 10);
+    },
+
+    getCloneTo : function () {
+      var $target;
+      $target = this.$('button');
+      return parseInt($target.attr('data-clone-to'));
+    },
+
+    getCloneToType : function () {
+      var $target;
+      $target = this.$('button');
+      return parseInt($target.attr('data-clone-to-type'));
     },
 
     onDataRecieve : function (data) {

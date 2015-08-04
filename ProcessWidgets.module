@@ -109,12 +109,21 @@ class ProcessWidgets extends Process implements Module {
   {
     $cloneFrom = (integer) $this->sanitizer->text($this->input->cloneFrom);
     $cloneTo = (integer) $this->sanitizer->text($this->input->cloneTo);
+    $cloneToType = (integer) $this->sanitizer->text($this->input->cloneToType);
+
     $cloneFrom = $this->templates->get($cloneFrom);
-    $cloneTo = $this->pages->get($cloneTo);
+    if ($cloneToType === Widget::ownerTypePage) {
+      $cloneTo = $this->pages->get($cloneTo);
+    } else if ($cloneToType === Widget::ownerTypeTemplate) {
+      $cloneTo = wire('templates')->get($cloneTo);
+    } else {
+      throw new WireException("Wrong cloneToType: $cloneToType");
+    }
+
     $cloneFromWidgets = $cloneFrom->widgets;
     
     foreach ($cloneFromWidgets->filter('parent=1') as $cloneWidget) {
-      $this->cloneWidget($cloneWidget, $cloneTo, Widget::ownerTypePage);
+      $this->cloneWidget($cloneWidget, $cloneTo, $cloneToType);
     }
 
     $out = "";
@@ -359,21 +368,12 @@ class ProcessWidgets extends Process implements Module {
     $processPageEdit = $event->object;
     $widgetsTab = $this->buildWidgetTab($page);
 
-    // If the page's teplate has widgets 
-    // then add option to clone the widgets from template
-    if ($page->template->widgets->count()) {
-      $field = new InputfieldCloneWidgets();
-      $field->name = "widgets_clone_template";
-      $field->label = $this->_('Clone Widgets From Template');
-      $field->attr('value', $this->_('Clone Widgets'));
-
-      $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id . '#' . $this->className();
-      $field->description = sprintf($this->_('This page does not own any widgets. But it\'s template owns widgets that are automatically rendered for pages with that template. Consider modifying the widgets on [Template](%1$s) page. You can also clone all widgets that are owned by templae and modify them to fit your needs for this particular page.'), $templateEditUrl);
-      $widgetsTab->prepend($field);
-
-      $this->jsSettings['cloneFrom'] = $page->template->id;
-      $this->jsSettings['cloneTo'] = $page->id;
-    }
+    // add option to clone the widgets from template
+    $field = new InputfieldCloneWidgets();
+    $field->setOwner($page);
+    $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id . '#' . $this->className();
+    $field->description = sprintf($this->_('This page does not own any widgets. Consider modifying the widgets on [%2$s](%1$s) template. You can also clone all widgets that are owned by a template and modify them to fit your needs for this particular page.'), $templateEditUrl, $page->template->name);
+    $widgetsTab->prepend($field);
 
     $processPageEdit->addTab($widgetsTab->attr('id'), $this->_('Widgets'));
     $form->insertBefore($widgetsTab, $form->get('submit_save'));
@@ -392,6 +392,13 @@ class ProcessWidgets extends Process implements Module {
     
     $processTemplate = $event->object;
     $widgetsTab = $this->buildWidgetTab($template);
+
+    // add option to clone the widgets from template
+    $field = new InputfieldCloneWidgets();
+    $field->setOwner($template);
+    $field->description = $this->_('This template does not own any widgets. You can clone all widgets that are owned by another template and modify them to fit your needs for this particular page.');
+    $widgetsTab->prepend($field);
+
     $widgetsTab->attr('title', $this->_('Widgets'));
     $widgetsTab->attr('class', 'WireTab');
     $form->insertBefore($widgetsTab, $form->get('submit'));
