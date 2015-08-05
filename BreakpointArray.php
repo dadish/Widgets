@@ -41,4 +41,9 @@ class BreakpointArray extends WireArray {
     return $info;
   }
 
+  public function __toString()
+  {
+    return $this->className();
+  }
+
 }
