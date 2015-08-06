@@ -1,6 +1,8 @@
 Widgets
 =======
 
+### This repository is under development and is not ready for prime time.
+
 Widgets is a [ProcessWire][pw] module. It is designed to be as flexible as 
 possible for websites that change their look on demand with support of responsive 
 grids inspired by [Susy][susy].
