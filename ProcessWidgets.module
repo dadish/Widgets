@@ -14,7 +14,7 @@ class ProcessWidgets extends Process implements Module {
       'version' => 005,       // version number of module
       'summary' => _('Helps to manage widgets.'),      // one sentence summary of module
       'icon' => 'cubes',
-      'requires' => array('Widgets', 'WidgetContainer', 'JqueryCore', 'JqueryUI', 'JqueryMagnific'),
+      'requires' => array('Widgets', 'WidgetContainer', 'WidgetReference', 'JqueryCore', 'JqueryUI', 'JqueryMagnific'),
       'autoload' => 'process=ProcessPageEdit|ProcessTemplate',
       'page' => array(
         'parent' => 'setup',
