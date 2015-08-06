@@ -195,11 +195,11 @@ class Widgets extends WidgetArray implements Module {
       );
     // Try to get widgets assigned to Page itself
     // If there are no widgets then get widgets for Page's template
-    $widgets = $this->fetchAllByOwner($page->id, Widget::ownerTypePage);
+    $widgets = $this->fetchAll($page->id, Widget::ownerTypePage);
     if ($widgets->count()) {
       return $out;
     } else {
-      $this->fetchAllByOwner($page->template->id, Widget::ownerTypeTemplate);
+      $this->fetchAll($page->template->id, Widget::ownerTypeTemplate);
       $out['ownerId'] = $page->template->id;
       $out['ownerType'] = Widget::ownerTypeTemplate;
       return $out;
@@ -209,24 +209,36 @@ class Widgets extends WidgetArray implements Module {
   protected function fetchAllForTemplate(Template $template)
   {
     // Try to get widgets assigned to Template.
-    $this->fetchAllByOwner($template->id, Widget::ownerTypeTemplate);
+    $this->fetchAll($template->id, Widget::ownerTypeTemplate);
     return $template->id;
   }
 
-  public function fetchAllByOwner($owner, $ownerType)
+  public function fetchAll($owner = null, $ownerType = null)
   {
-    $owner = (integer) $owner;
-    $ownerType = (integer) $ownerType;
+    $owner = is_null($owner) ? null : (integer) $owner;
+    $ownerType = is_null($ownerType) ? null : (integer) $ownerType;
     $table = self::dbTableName;
 
-    $sql = "SELECT * FROM $table WHERE owner = $owner AND ownerType = $ownerType";
+    if (is_null($owner) && is_null($ownerType)) {
+      $sql = "SELECT * FROM $table";
+    
+    } else if (is_null($owner) && !is_null($ownerType)) {
+      $sql = "SELECT * FROM $table WHERE ownerType = $ownerType";
+    
+    } else if (!is_null($owner) && is_null($ownerType)) {
+      $sql = "SELECT * FROM $table WHERE owner = $owner";
+
+    } else if (!is_null($owner) && !is_null($ownerType)) {
+      $sql = "SELECT * FROM $table WHERE owner = $owner AND ownerType = $ownerType";
+    }
+
     $stmt = $this->database->prepare($sql);
     $stmt->execute();
     if ($stmt->rowCount()) {
       return $this->dataToWidgets($stmt->fetchAll(PDO::FETCH_ASSOC));
     }
     // if there is no widgets then return empty array of widgets
-    return new WidgetArray();
+    return new WidgetArray();    
   }
 
   protected function fetchCountForOwner($owner, $ownerType)
