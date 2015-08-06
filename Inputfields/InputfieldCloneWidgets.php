@@ -31,6 +31,7 @@ class InputfieldCloneWidgets extends Inputfield {
     $out = "<select id='$name' name='$name'>";
     foreach (wire('templates') as $template) {
       if ($template->hasWidgets()) {
+        if ($this->owner instanceof Template && $this->owner->id === $template->id) continue;
         if ($this->owner instanceof Page) {
           $selected = ($this->owner->template->id === $template->id) ? "selected='selected'" : "";
         } else {

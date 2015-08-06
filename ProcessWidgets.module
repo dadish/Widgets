@@ -369,11 +369,13 @@ class ProcessWidgets extends Process implements Module {
     $widgetsTab = $this->buildWidgetTab($page);
 
     // add option to clone the widgets from template
-    $field = new InputfieldCloneWidgets();
-    $field->setOwner($page);
-    $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id . '#' . $this->className();
-    $field->description = sprintf($this->_('This page does not own any widgets. Consider modifying the widgets on [%2$s](%1$s) template. You can also clone all widgets that are owned by a template and modify them to fit your needs for this particular page.'), $templateEditUrl, $page->template->name);
-    $widgetsTab->prepend($field);
+    if ($this->someTemplatesHasWidgets()) {
+      $field = new InputfieldCloneWidgets();
+      $field->setOwner($page);
+      $templateEditUrl = $this->config->urls->admin . 'setup/template/edit?id=' . $page->template->id . '#' . $this->className();
+      $field->description = sprintf($this->_('This page does not own any widgets. Consider modifying the widgets on [%2$s](%1$s) template. You can also clone all widgets that are owned by a template and modify them to fit your needs for this particular page.'), $templateEditUrl, $page->template->name);
+      $widgetsTab->prepend($field);
+    }
 
     $processPageEdit->addTab($widgetsTab->attr('id'), $this->_('Widgets'));
     $form->insertBefore($widgetsTab, $form->get('submit_save'));
@@ -394,15 +396,24 @@ class ProcessWidgets extends Process implements Module {
     $widgetsTab = $this->buildWidgetTab($template);
 
     // add option to clone the widgets from template
-    $field = new InputfieldCloneWidgets();
-    $field->setOwner($template);
-    $field->description = $this->_('This template does not own any widgets. You can clone all widgets that are owned by another template and modify them to fit your needs for this particular page.');
-    $widgetsTab->prepend($field);
+    if ($this->someTemplatesHasWidgets($template)) {
+      $field = new InputfieldCloneWidgets();
+      $field->setOwner($template);
+      $field->description = $this->_('This template does not own any widgets. You can clone all widgets that are owned by another template and modify them to fit your needs for this particular page.');
+      $widgetsTab->prepend($field);      
+    }
 
     $widgetsTab->attr('title', $this->_('Widgets'));
     $widgetsTab->attr('class', 'WireTab');
     $form->insertBefore($widgetsTab, $form->get('submit'));
     $event->return = $form;
+  }
+
+  public function someTemplatesHasWidgets($exceptOwner = null)
+  {
+    $widgets = $this->widgets->fetchAll(null, Widget::ownerTypeTemplate);
+    if (!is_null($exceptOwner)) $widgets->not("owner=$exceptOwner");
+    return (boolean) $widgets->count();
   }
 
   protected function requireHelperClasses()
