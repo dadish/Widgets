@@ -59,6 +59,7 @@ class InputfieldWidget extends InputfieldTextarea {
     // Prepare breakpoints
     $breakpoints = new InputfieldBreakpoints($this->widget);
     $breakpoints->setWidget($this->widget);
+    $breakpoints->collapsed = Inputfield::collapsedYes;
     $wrap->add($breakpoints);
 
     // Add widgets container if it is a container
