@@ -12,7 +12,7 @@
 }
 
 .<?= $prefix ?>-inner{
-  display: block;
+  display: inline-block;
   width: 100%;
 }
 
