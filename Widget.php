@@ -134,6 +134,11 @@ class Widget extends WireData{
     }
   }
 
+  public static function getDefaultSettings()
+  {
+    return array();
+  }
+
   public function children()
   {
     return $this->widgets->find("parent=$this, sort=sort");
